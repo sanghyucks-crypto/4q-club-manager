@@ -1,0 +1,8 @@
+{
+  "name": "4q-club-manager",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "googleapis": "^140.0.0"
+  }
+}

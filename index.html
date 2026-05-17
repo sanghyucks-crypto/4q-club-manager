@@ -63,6 +63,9 @@
     /* Bottom sheet */
     .sheet{background:#fff;border-radius:26px 26px 0 0;width:100%;max-width:480px;margin:0 auto;max-height:90vh;overflow-y:auto;animation:up .3s ease}
     @keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #loadingOv{position:fixed;inset:0;background:linear-gradient(135deg,#4F6EFF,#7C3AED);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#fff}
+    .spin-ring{width:36px;height:36px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-top:28px}
     .sheet-handle{width:38px;height:4px;background:#DDD;border-radius:2px;margin:12px auto 0}
     .sheet-hdr{padding:16px 22px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:1}
     .sheet-title{font-size:17px;font-weight:800}
@@ -672,6 +675,14 @@
   </div>
 </div>
 
+<!-- ── Loading ── -->
+<div id="loadingOv">
+  <div style="font-size:52px;margin-bottom:14px">⛪</div>
+  <div style="font-size:20px;font-weight:800;letter-spacing:-.5px">4청 동아리 게시판</div>
+  <div style="font-size:12px;opacity:.75;margin-top:6px">분당우리교회 4청년부</div>
+  <div class="spin-ring"></div>
+</div>
+
 <!-- ── 사용설명서 ── -->
 <div class="ov" id="helpOv" onclick="closeOv('helpOv',event)">
   <div class="sheet" style="max-height:92vh;overflow-y:auto">
@@ -915,26 +926,54 @@ let regGender = null;
 let newAdminRole = '관리자';
 let pwTargetName = null;
 
-function load() {
-  try { clubs = JSON.parse(localStorage.getItem(CLUBS_KEY)) || JSON.parse(JSON.stringify(DEFAULT_CLUBS)); } catch { clubs = JSON.parse(JSON.stringify(DEFAULT_CLUBS)); }
-  try { admins = JSON.parse(localStorage.getItem(ADMINS_KEY)) || JSON.parse(JSON.stringify(DEFAULT_ADMINS)); } catch { admins = JSON.parse(JSON.stringify(DEFAULT_ADMINS)); }
-  try { customMembers = JSON.parse(localStorage.getItem(CUSTOM_KEY)) || {}; } catch { customMembers = {}; }
-  try { pendingMembers = JSON.parse(localStorage.getItem(PENDING_MEM_KEY)) || []; } catch { pendingMembers = []; }
-  try { pendingClubReqs = JSON.parse(localStorage.getItem(PENDING_CLUB_KEY)) || []; } catch { pendingClubReqs = []; }
-  try { approvalLog = JSON.parse(localStorage.getItem(APPROVAL_LOG_KEY)) || []; } catch { approvalLog = []; }
-  try { appPeriod = JSON.parse(localStorage.getItem(PERIOD_KEY)) || { start:'', end:'' }; } catch { appPeriod = { start:'', end:'' }; }
+const API = '/.netlify/functions/data';
+
+function saveToAPI(key, value) {
+  return fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, value }),
+  }).catch(err => console.error('저장 오류:', err));
+}
+
+function saveClubs()       { return saveToAPI('clubs', clubs); }
+function saveAdmins()      { return saveToAPI('admins', admins); }
+function saveCustom()      { return saveToAPI('customMembers', customMembers); }
+function savePendingMem()  { return saveToAPI('pendingMembers', pendingMembers); }
+function savePendingClub() { return saveToAPI('pendingClubReqs', pendingClubReqs); }
+function saveApprovalLog() { return saveToAPI('approvalLog', approvalLog); }
+function savePeriod()      { return saveToAPI('appPeriod', appPeriod); }
+
+async function load() {
+  try {
+    const res = await fetch(API);
+    if (!res.ok) throw new Error('API error ' + res.status);
+    const d = await res.json();
+    clubs         = (d.clubs && d.clubs.length)   ? d.clubs         : JSON.parse(JSON.stringify(DEFAULT_CLUBS));
+    admins        = (d.admins && d.admins.length)  ? d.admins        : JSON.parse(JSON.stringify(DEFAULT_ADMINS));
+    customMembers = d.customMembers  || {};
+    pendingMembers  = Array.isArray(d.pendingMembers)  ? d.pendingMembers  : [];
+    pendingClubReqs = Array.isArray(d.pendingClubReqs) ? d.pendingClubReqs : [];
+    approvalLog     = Array.isArray(d.approvalLog)     ? d.approvalLog     : [];
+    appPeriod       = d.appPeriod    || { start:'', end:'' };
+  } catch (e) {
+    console.error('불러오기 오류:', e);
+    clubs = JSON.parse(JSON.stringify(DEFAULT_CLUBS));
+    admins = JSON.parse(JSON.stringify(DEFAULT_ADMINS));
+    customMembers = {}; pendingMembers = []; pendingClubReqs = []; approvalLog = []; appPeriod = { start:'', end:'' };
+  }
   // Migration: clear members from preparing clubs
   let _clubsChanged = false;
-  clubs.forEach(club => { if (club.status === 'preparing' && club.members.length > 0) { club.members = []; _clubsChanged = true; } });
-  if (_clubsChanged) localStorage.setItem(CLUBS_KEY, JSON.stringify(clubs));
+  clubs.forEach(c => { if (c.status === 'preparing' && c.members.length > 0) { c.members = []; _clubsChanged = true; } });
+  if (_clubsChanged) await saveClubs();
+
+  document.getElementById('loadingOv').style.display = 'none';
+  migrateMissingClubs();
+  renderPeriodStatus();
+  document.body.style.overflow = 'hidden';
+  updateAdminBtn();
+  renderAll();
 }
-function saveClubs() { localStorage.setItem(CLUBS_KEY, JSON.stringify(clubs)); }
-function saveAdmins() { localStorage.setItem(ADMINS_KEY, JSON.stringify(admins)); }
-function saveCustom() { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customMembers)); }
-function savePendingMem() { localStorage.setItem(PENDING_MEM_KEY, JSON.stringify(pendingMembers)); }
-function savePendingClub() { localStorage.setItem(PENDING_CLUB_KEY, JSON.stringify(pendingClubReqs)); }
-function saveApprovalLog() { localStorage.setItem(APPROVAL_LOG_KEY, JSON.stringify(approvalLog)); }
-function savePeriod() { localStorage.setItem(PERIOD_KEY, JSON.stringify(appPeriod)); }
 function localDateStr() {
   const n = new Date();
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
@@ -1101,7 +1140,7 @@ function leaderAddMember() {
   club.members.push(name);
   if (!(name in memberDB) && !(name in customMembers)) {
     customMembers[name] = { year: '-', gender: '-', phone: '-' };
-    localStorage.setItem('4q_custom_v1', JSON.stringify(customMembers));
+    saveCustom();
   }
   saveClubs();
   inp.value = '';
@@ -1453,7 +1492,7 @@ function dbAddMember(idx) {
   // memberDB에 없으면 customMembers에 기본 정보로 등록
   if (!(name in memberDB) && !(name in customMembers)) {
     customMembers[name] = { year: '-', gender: '-', phone: '-' };
-    localStorage.setItem('4q_custom_v1', JSON.stringify(customMembers));
+    saveCustom();
   }
   saveClubs();
   renderDashboard();
@@ -2111,11 +2150,6 @@ function migrateMissingClubs() {
 
 /* ═══ INIT ═══ */
 load();
-migrateMissingClubs();
-renderPeriodStatus();
-document.body.style.overflow = 'hidden';
-updateAdminBtn();
-renderAll();
 </script>
 </body>
 </html>
