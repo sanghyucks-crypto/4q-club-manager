@@ -423,12 +423,14 @@
     <div class="sheet-handle"></div>
     <div class="sheet-hdr"><div class="sheet-title">동아리 정보 수정</div><button class="sheet-close" onclick="closeOv('editClubOv')">✕</button></div>
     <div style="padding:16px 22px 32px;display:flex;flex-direction:column;gap:14px">
+      <div><label class="f-label">📌 동아리 이름</label><input class="f-input" id="ec-name" placeholder="동아리 이름" maxlength="20"></div>
       <div><label class="f-label">🎯 목적</label><input class="f-input" id="ec-purp" placeholder="활동 목적" maxlength="60"></div>
       <div class="f-row2">
         <div><label class="f-label">📅 정기 모임</label><input class="f-input" id="ec-sch" placeholder="토요일 14:00" maxlength="30"></div>
         <div><label class="f-label">🔄 주기</label><input class="f-input" id="ec-frq" placeholder="격주" maxlength="20"></div>
       </div>
       <div><label class="f-label">📍 장소</label><input class="f-input" id="ec-loc" placeholder="드림센터 1층" maxlength="40"></div>
+      <div><label class="f-label">📝 메모</label><input class="f-input" id="ec-note" placeholder="특이사항, 임시 이장 등" maxlength="40"></div>
       <div id="ec-manager-row" style="display:none">
         <label class="f-label">👤 담당 관리자</label>
         <select class="f-input" id="ec-manager"></select>
@@ -793,7 +795,12 @@ const DEFAULT_ADMINS = [
   {name:'김지숙', pw:'0000', role:'부방장'},
 ];
 
-const ABSENTEES = ['김경욱','김남송','김명수','김미강','김상미','김신애','김신영','신은영','유정화','윤주혜','이기홍','이혜연','임유진','장시연','장형지','정신영','조은교','최주영','한성욱','한지민'];
+const ABSENTEES_BASE = ['김경욱','김남송','김명수','김미강','김상미','김신애','김신영','신은영','유정화','윤주혜','이기홍','이혜연','임유진','장시연','장형지','정신영','조은교','최주영','한성욱','한지민'];
+function getAbsentees() {
+  const activeMembers = new Set(clubs.filter(c=>c.status==='active').flatMap(c=>c.members));
+  const prepMembers = clubs.filter(c=>c.status==='preparing').flatMap(c=>c.members).filter(n=>!activeMembers.has(n));
+  return [...new Set([...ABSENTEES_BASE, ...prepMembers])];
+}
 
 /* ═══ STATE ═══ */
 let clubs, admins, customMembers, pendingMembers, pendingClubReqs, approvalLog;
@@ -1364,7 +1371,7 @@ function renderAll() {
   const pc = clubs.filter(c=>c.status==='preparing').length;
   document.getElementById('s-active').textContent = ac;
   document.getElementById('s-prep').textContent = pc;
-  document.getElementById('s-wait').textContent = ABSENTEES.length;
+  document.getElementById('s-wait').textContent = getAbsentees().length;
   document.getElementById('b-active').textContent = ac+'개';
   document.getElementById('b-prep').textContent = pc+'개';
   document.getElementById('prep-section').style.display = pc > 0 ? '' : 'none';
@@ -1400,7 +1407,7 @@ function renderAll() {
 
   // Absentee
   const ag = document.getElementById('abs-grid');
-  ABSENTEES.forEach(name => {
+  getAbsentees().forEach(name => {
     const m = getMember(name);
     const canSee = auth.isAdmin;
     const el = document.createElement('div');
@@ -1457,7 +1464,7 @@ function openStatPopup(type) {
     titleEl.textContent = '⌛ 동아리 신청 대기자';
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
-    ABSENTEES.forEach(name => {
+    getAbsentees().forEach(name => {
       const span = document.createElement('span');
       span.style.cssText = 'background:#F3F4F6;border-radius:16px;padding:4px 10px;font-size:12px;cursor:pointer';
       span.textContent = name;
@@ -1605,10 +1612,12 @@ function openClub(idx) {
 
 function openEditClubInfo() {
   const club = clubs[curClubIdx];
+  document.getElementById('ec-name').value = club.name || '';
   document.getElementById('ec-purp').value = club.purpose || '';
   document.getElementById('ec-sch').value = club.schedule || '';
   document.getElementById('ec-frq').value = club.frequency || '';
   document.getElementById('ec-loc').value = club.location || '';
+  document.getElementById('ec-note').value = club.note || '';
   const ecMgrRow = document.getElementById('ec-manager-row');
   const ecMgr = document.getElementById('ec-manager');
   const canSetMgr = auth.adminRole === '방장' || auth.adminRole === '부방장';
@@ -1625,15 +1634,19 @@ function openEditClubInfo() {
   openOv('editClubOv');
 }
 function saveClubEdit() {
+  const name = document.getElementById('ec-name').value.trim();
   const purp = document.getElementById('ec-purp').value.trim();
   const sch  = document.getElementById('ec-sch').value.trim();
   const frq  = document.getElementById('ec-frq').value.trim();
   const loc  = document.getElementById('ec-loc').value.trim();
+  const note = document.getElementById('ec-note').value.trim();
   const club = clubs[curClubIdx];
+  if (name) club.name = name;
   club.purpose  = purp  || club.purpose;
   club.schedule = sch   || club.schedule;
   club.frequency = frq  || club.frequency;
   club.location = loc   || club.location;
+  club.note = note;
   const canSetMgr = auth.adminRole === '방장' || auth.adminRole === '부방장';
   if (canSetMgr) club.manager = document.getElementById('ec-manager').value;
   saveClubs();
