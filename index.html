@@ -1501,7 +1501,7 @@ function openClub(idx) {
   document.getElementById('m-purp2').textContent = club.purpose || '-';
   const mgr = club.manager || '미지정';
   document.getElementById('m-manager').textContent = mgr;
-  document.getElementById('m-manager-row').style.display = club.manager ? '' : (auth.isAdmin ? '' : 'none');
+  document.getElementById('m-manager-row').style.display = '';
   document.getElementById('m-cnt').textContent = club.members.length + '명';
   const sb = document.getElementById('m-stat');
   sb.textContent = club.status==='active'?'✅ 런칭':'⏳ 준비중';
