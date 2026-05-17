@@ -799,6 +799,8 @@
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 /* ═══ CONSTANTS ═══ */
 const CLUBS_KEY = '4q_clubs_v4';
@@ -926,53 +928,72 @@ let regGender = null;
 let newAdminRole = '관리자';
 let pwTargetName = null;
 
-const API = '/.netlify/functions/data';
+/* ═══ FIREBASE ═══ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAaoAxFweay9kIsgM7SNv4IhLYIjWlrRGo",
+  authDomain: "q-club-manager.firebaseapp.com",
+  databaseURL: "https://q-club-manager-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "q-club-manager",
+  storageBucket: "q-club-manager.firebasestorage.app",
+  messagingSenderId: "905944680024",
+  appId: "1:905944680024:web:a15850eb2940067bf1ac2d"
+};
+firebase.initializeApp(firebaseConfig);
+const fbDb = firebase.database();
 
-function saveToAPI(key, value) {
-  return fetch(API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key, value }),
-  }).catch(err => console.error('저장 오류:', err));
+function toArr(v) {
+  if (!v) return [];
+  if (Array.isArray(v)) return v;
+  return Object.values(v);
 }
 
-function saveClubs()       { return saveToAPI('clubs', clubs); }
-function saveAdmins()      { return saveToAPI('admins', admins); }
-function saveCustom()      { return saveToAPI('customMembers', customMembers); }
-function savePendingMem()  { return saveToAPI('pendingMembers', pendingMembers); }
-function savePendingClub() { return saveToAPI('pendingClubReqs', pendingClubReqs); }
-function saveApprovalLog() { return saveToAPI('approvalLog', approvalLog); }
-function savePeriod()      { return saveToAPI('appPeriod', appPeriod); }
+function saveClubs()       { fbDb.ref('clubs').set(clubs); }
+function saveAdmins()      { fbDb.ref('admins').set(admins); }
+function saveCustom()      { fbDb.ref('customMembers').set(customMembers); }
+function savePendingMem()  { fbDb.ref('pendingMembers').set(pendingMembers); }
+function savePendingClub() { fbDb.ref('pendingClubReqs').set(pendingClubReqs); }
+function saveApprovalLog() { fbDb.ref('approvalLog').set(approvalLog); }
+function savePeriod()      { fbDb.ref('appPeriod').set(appPeriod); }
 
-async function load() {
-  try {
-    const res = await fetch(API);
-    if (!res.ok) throw new Error('API error ' + res.status);
-    const d = await res.json();
-    clubs         = (d.clubs && d.clubs.length)   ? d.clubs         : JSON.parse(JSON.stringify(DEFAULT_CLUBS));
-    admins        = (d.admins && d.admins.length)  ? d.admins        : JSON.parse(JSON.stringify(DEFAULT_ADMINS));
-    customMembers = d.customMembers  || {};
-    pendingMembers  = Array.isArray(d.pendingMembers)  ? d.pendingMembers  : [];
-    pendingClubReqs = Array.isArray(d.pendingClubReqs) ? d.pendingClubReqs : [];
-    approvalLog     = Array.isArray(d.approvalLog)     ? d.approvalLog     : [];
-    appPeriod       = d.appPeriod    || { start:'', end:'' };
-  } catch (e) {
-    console.error('불러오기 오류:', e);
+let _fbLoaded = false;
+function load() {
+  fbDb.ref('/').on('value', (snap) => {
+    const d = snap.val() || {};
+    const newClubs = toArr(d.clubs);
+    clubs = newClubs.length ? newClubs : JSON.parse(JSON.stringify(DEFAULT_CLUBS));
+    const newAdmins = toArr(d.admins);
+    admins = newAdmins.length ? newAdmins : JSON.parse(JSON.stringify(DEFAULT_ADMINS));
+    customMembers   = d.customMembers || {};
+    pendingMembers  = toArr(d.pendingMembers);
+    pendingClubReqs = toArr(d.pendingClubReqs);
+    approvalLog     = toArr(d.approvalLog);
+    appPeriod       = d.appPeriod || { start:'', end:'' };
+
+    if (!_fbLoaded) {
+      _fbLoaded = true;
+      if (!d.clubs) { saveClubs(); saveAdmins(); }
+      let _cc = false;
+      clubs.forEach(c => { if (c.status === 'preparing' && c.members.length > 0) { c.members = []; _cc = true; } });
+      if (_cc) saveClubs();
+      document.getElementById('loadingOv').style.display = 'none';
+      migrateMissingClubs();
+      renderPeriodStatus();
+      document.body.style.overflow = 'hidden';
+    }
+    updateAdminBtn();
+    renderAll();
+  }, (err) => {
+    console.error('Firebase 오류:', err);
     clubs = JSON.parse(JSON.stringify(DEFAULT_CLUBS));
     admins = JSON.parse(JSON.stringify(DEFAULT_ADMINS));
     customMembers = {}; pendingMembers = []; pendingClubReqs = []; approvalLog = []; appPeriod = { start:'', end:'' };
-  }
-  // Migration: clear members from preparing clubs
-  let _clubsChanged = false;
-  clubs.forEach(c => { if (c.status === 'preparing' && c.members.length > 0) { c.members = []; _clubsChanged = true; } });
-  if (_clubsChanged) await saveClubs();
-
-  document.getElementById('loadingOv').style.display = 'none';
-  migrateMissingClubs();
-  renderPeriodStatus();
-  document.body.style.overflow = 'hidden';
-  updateAdminBtn();
-  renderAll();
+    document.getElementById('loadingOv').style.display = 'none';
+    migrateMissingClubs();
+    renderPeriodStatus();
+    document.body.style.overflow = 'hidden';
+    updateAdminBtn();
+    renderAll();
+  });
 }
 function localDateStr() {
   const n = new Date();
