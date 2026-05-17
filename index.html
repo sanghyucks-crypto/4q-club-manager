@@ -1297,7 +1297,7 @@ function renderDashboard() {
             <option value="">미지정</option>
             ${admins.map(a=>`<option value="${a.name}"${club.manager===a.name?' selected':''}>${a.name} (${a.role})</option>`).join('')}
           </select>
-          <button class="db-add-btn" onclick="dbSetManager(${idx})">배정</button>
+          <button class="db-add-btn db-mgr-btn" onclick="dbSetManager(${idx})">배정</button>
         </div>
         <button class="db-edit-btn" onclick="curClubIdx=${idx};openEditClubInfo()">✏️ 동아리 정보 수정</button>
         <div class="db-mem-chips" id="db-chips-${idx}">${memberChips}</div>
@@ -1331,7 +1331,12 @@ function dbRemoveMember(idx, name) {
 function dbSetManager(idx) {
   clubs[idx].manager = document.getElementById('db-mgr-' + idx).value;
   saveClubs();
-  renderDashboard();
+  const btn = document.querySelector(`#db-card-${idx} .db-mgr-btn`);
+  if (btn) {
+    btn.textContent = '✓ 완료';
+    btn.style.background = '#059669';
+    setTimeout(() => { btn.textContent = '배정'; btn.style.background = ''; }, 2000);
+  }
 }
 
 function dbAddMember(idx) {
