@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>4청 동아리 게시판</title>
+  <style>
+    :root { --bg:#F0F4FA; --card:#fff; --border:#E4E9F0; --t1:#1A1D2E; --t2:#6B7280; --t3:#9CA3AF; --pri:#4F6EFF; --r:18px; }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    body{font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
+    .app{max-width:480px;margin:0 auto;padding-bottom:100px}
+
+    /* Header */
+    .hdr{background:linear-gradient(135deg,#4F6EFF,#7C3AED);padding:16px 16px 24px;color:#fff;position:relative}
+    .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .hdr-sub{font-size:11px;opacity:.7;letter-spacing:.5px}
+    .hdr h1{font-size:24px;font-weight:800;letter-spacing:-.5px;margin-top:4px}
+    .hdr-stats{display:flex;gap:8px;margin-top:14px}
+    .stat{flex:1;text-align:center;background:rgba(255,255,255,.15);border-radius:12px;padding:9px 6px}
+    .stat-n{font-size:19px;font-weight:700}
+    .stat-l{font-size:10px;opacity:.8;margin-top:1px}
+
+    /* Header buttons */
+    .user-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;color:#fff;cursor:pointer}
+    .hdr-right{display:flex;align-items:center;gap:6px}
+    .hdr-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 10px;font-size:11px;color:#fff;cursor:pointer;white-space:nowrap}
+    .admin-active-pill{background:rgba(255,220,0,.25);border-color:rgba(255,220,0,.5)}
+
+    /* Sections */
+    .section{padding:18px 14px 4px}
+    .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .sec-title{font-size:16px;font-weight:700}
+    .sec-badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;color:#fff}
+    .ba{background:#4F6EFF} .bp{background:#F59E0B}
+    .sec-empty{text-align:center;padding:24px;color:var(--t3);font-size:14px;background:#fff;border-radius:var(--r);border:2px dashed var(--border);grid-column:span 2}
+
+    /* Cards */
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .card{background:#fff;border-radius:var(--r);padding:14px;cursor:pointer;transition:transform .15s;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1.5px solid transparent;position:relative;overflow:hidden}
+    .card:active{transform:scale(.97)}
+    .card.mine{border-color:#4F6EFF;box-shadow:0 4px 18px rgba(79,110,255,.18)}
+    .card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px}
+    .card-name{font-size:13px;font-weight:700;line-height:1.3;margin-bottom:3px}
+    .card-leader{font-size:11px;color:var(--t2);margin-bottom:8px}
+    .card-sch{font-size:11px;color:var(--t2);line-height:1.5}
+    .card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+    .card-cnt{font-size:12px;font-weight:600}
+    .card-arrow{font-size:13px;color:var(--t3)}
+    .mine-badge{position:absolute;top:8px;right:8px;background:#4F6EFF;color:#fff;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:700}
+    .status-dot{position:absolute;top:8px;left:8px;width:7px;height:7px;border-radius:50%;background:#22C55E}
+    .status-dot.p{background:#F59E0B}
+
+    /* FAB */
+    .fab{position:fixed;bottom:24px;right:calc(50% - 226px);width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#4F6EFF,#7C3AED);border:none;color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 18px rgba(79,110,255,.4);display:none;align-items:center;justify-content:center;z-index:100;transition:transform .2s}
+    .fab:active{transform:scale(.93)}
+    .fab.show{display:flex}
+
+    /* Overlays */
+    .ov{display:none;position:fixed;inset:0;background:rgba(10,10,30,.52);z-index:300;backdrop-filter:blur(2px)}
+    .ov.open{display:flex;align-items:flex-end}
+    .ov.center{align-items:center;justify-content:center}
+
+    /* Bottom sheet */
+    .sheet{background:#fff;border-radius:26px 26px 0 0;width:100%;max-width:480px;margin:0 auto;max-height:90vh;overflow-y:auto;animation:up .3s ease}
+    @keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .sheet-handle{width:38px;height:4px;background:#DDD;border-radius:2px;margin:12px auto 0}
+    .sheet-hdr{padding:16px 22px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:1}
+    .sheet-title{font-size:17px;font-weight:800}
+    .sheet-close{background:#F3F4F6;border:none;border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+    /* Center card */
+    .ccard{background:#fff;border-radius:22px;width:calc(100% - 48px);max-width:360px;animation:pop .22s ease;overflow:hidden}
+    @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+
+    /* Club modal body */
+    .modal-hero{padding:18px 22px 14px;display:flex;gap:14px;align-items:flex-start}
+    .modal-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+    .modal-t{font-size:21px;font-weight:800;letter-spacing:-.5px}
+    .modal-p{font-size:12px;color:var(--t2);margin-top:3px}
+    .tag-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+    .tag{display:inline-flex;align-items:center;gap:3px;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600}
+    .tag-l{background:#EEF2FF;color:#4F6EFF}
+    .tag-s.active{background:#DCFCE7;color:#15803D}
+    .tag-s.preparing{background:#FEF9C3;color:#92400E}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 22px 14px}
+    .ic{background:#F8FAFC;border-radius:11px;padding:11px 13px}
+    .ic-l{font-size:9px;color:var(--t3);font-weight:600;letter-spacing:.5px;margin-bottom:3px}
+    .ic-v{font-size:13px;font-weight:600}
+    .divider{height:7px;background:#F0F4FA}
+    .mem-sec{padding:14px 22px 10px}
+    .mem-title{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+    .cnt-b{background:var(--pri);color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600}
+    .mem-row{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #F3F4F6;cursor:pointer}
+    .mem-row:last-child{border-bottom:none}
+    .av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;margin-right:11px}
+    .av.m{background:#DBEAFE;color:#1D4ED8} .av.f{background:#FCE7F3;color:#BE185D} .av.u{background:#F3F4F6;color:#6B7280}
+    .mem-meta{flex:1}
+    .mem-nrow{display:flex;align-items:center;gap:5px}
+    .mem-n{font-size:14px;font-weight:600}
+    .l-pill{background:linear-gradient(135deg,#4F6EFF,#7C3AED);color:#fff;border-radius:5px;padding:1px 5px;font-size:9px;font-weight:600}
+    .mem-sub{font-size:11px;color:var(--t2);margin-top:1px}
+    .mem-ph{font-size:12px;color:var(--pri);font-weight:500}
+    .ph-hide{font-size:12px;color:var(--t3);letter-spacing:2px}
+    .mem-kick-btn{margin-left:8px;flex-shrink:0;background:#FEE2E2;border:none;border-radius:50%;width:22px;height:22px;font-size:11px;color:#DC2626;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center}
+    .empty-m{text-align:center;padding:28px 0;color:var(--t3);font-size:14px}
+    .note-chip{display:inline-flex;background:#F0FDF4;color:#15803D;border-radius:7px;padding:4px 10px;font-size:11px;font-weight:500;margin:0 22px 12px}
+
+    /* Admin actions */
+    .admin-acts{padding:14px 22px 26px;display:flex;gap:8px}
+    .act-btn{flex:1;padding:12px;border:none;border-radius:13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
+    .act-btn:active{opacity:.7}
+    .act-toggle{background:#EEF2FF;color:#4F6EFF}
+    .act-toggle.top{background:#FEF9C3;color:#92400E}
+    .act-del{background:#FEF2F2;color:#DC2626}
+
+    /* Absentee */
+    .abs-wrap{padding:6px 14px 16px}
+    .abs-card{background:#fff;border-radius:var(--r);padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1.5px dashed #FCD34D}
+    .abs-hdr{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+    .abs-title{font-size:14px;font-weight:700;color:#B45309}
+    .abs-desc{font-size:11px;color:var(--t2);margin-bottom:12px}
+    .abs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+    .abs-item{background:#FFFBEB;border-radius:9px;padding:9px 5px;text-align:center}
+    .abs-item.click{cursor:pointer}
+    .abs-n{font-size:12px;font-weight:600}
+    .abs-i{font-size:10px;color:var(--t2);margin-top:1px}
+
+    /* Member popup */
+    .mem-pop{padding:28px 22px;text-align:center}
+    .pop-av{width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;margin:0 auto 12px}
+    .pop-name{font-size:21px;font-weight:800}
+    .pop-tags{display:flex;gap:5px;justify-content:center;margin:8px 0 18px}
+    .pop-tag{background:#F3F4F6;border-radius:20px;padding:3px 11px;font-size:11px;font-weight:600;color:var(--t2)}
+    .pop-ph-l{font-size:11px;color:var(--t3);margin-bottom:5px}
+    .pop-ph{font-size:17px;font-weight:700;color:var(--pri);letter-spacing:1px}
+    .pop-ph-hide{font-size:13px;color:var(--t3)}
+    .pop-close{margin-top:18px;width:100%;padding:13px;background:#F3F4F6;border:none;border-radius:13px;font-size:14px;font-weight:600;cursor:pointer}
+    .pop-edit-btn{display:block;width:100%;margin-top:8px;padding:11px;background:#EEF2FF;color:var(--pri);border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+
+    /* Form */
+    .form-body{padding:18px 22px;display:flex;flex-direction:column;gap:14px}
+    .f-label{font-size:11px;font-weight:700;color:var(--t2);display:block;margin-bottom:5px}
+    .f-input{width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:11px;font-size:15px;font-family:inherit;outline:none;transition:border-color .2s}
+    .f-input:focus{border-color:var(--pri)}
+    .f-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+    .e-opt{width:100%;aspect-ratio:1;border:2px solid var(--border);border-radius:9px;background:#fff;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .e-opt.sel{border-color:var(--pri);background:#EEF2FF}
+    .c-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+    .c-opt{height:34px;border-radius:9px;cursor:pointer;border:3px solid transparent;transition:all .15s}
+    .c-opt.sel{border-color:var(--t1);transform:scale(1.08)}
+    .f-submit{margin:4px 22px 22px;padding:15px;border:none;border-radius:15px;background:linear-gradient(135deg,#4F6EFF,#7C3AED);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+    .f-err{color:#DC2626;font-size:12px;padding:0 22px;min-height:16px}
+    .seg{display:flex;gap:6px}
+    .seg-btn{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--t2);text-align:center;transition:all .2s}
+    .seg-btn.sel{border-color:var(--pri);background:#EEF2FF;color:var(--pri)}
+
+    /* Confirm */
+    .conf-box{padding:26px 22px;text-align:center}
+    .conf-ico{font-size:38px;margin-bottom:10px}
+    .conf-t{font-size:17px;font-weight:800;margin-bottom:7px}
+    .conf-d{font-size:13px;color:var(--t2);margin-bottom:22px;line-height:1.5}
+    .conf-btns{display:flex;gap:8px}
+    .conf-btn{flex:1;padding:13px;border:none;border-radius:13px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+    .conf-cancel{background:#F3F4F6;color:var(--t1)}
+    .conf-danger{background:#FEF2F2;color:#DC2626}
+    .conf-ok{background:#EEF2FF;color:var(--pri)}
+
+    /* Login */
+    .login-ov{position:fixed;inset:0;z-index:700;background:linear-gradient(160deg,#4F6EFF,#7C3AED 55%,#1A1D2E);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 22px}
+    .login-ov.hidden{display:none}
+    .login-logo{font-size:50px;margin-bottom:10px}
+    .login-title{font-size:25px;font-weight:800;color:#fff;margin-bottom:5px;letter-spacing:-.5px}
+    .login-sub{font-size:13px;color:rgba(255,255,255,.65);margin-bottom:36px;text-align:center}
+    .login-card{background:#fff;border-radius:22px;padding:26px 22px;width:100%;max-width:360px}
+    .login-card-title{font-size:15px;font-weight:700;margin-bottom:13px}
+    .login-hint{font-size:11px;color:var(--t3);margin-top:7px;text-align:center}
+    .login-btn{width:100%;margin-top:12px;padding:15px;border:none;border-radius:13px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;background:linear-gradient(135deg,#4F6EFF,#7C3AED);color:#fff}
+    .login-err{color:#DC2626;font-size:12px;margin-top:7px;min-height:16px}
+
+    /* Admin management */
+    .admin-list{display:flex;flex-direction:column;gap:8px;padding:16px 22px}
+    .admin-row{background:#F8FAFC;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+    .admin-role-b{border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700}
+    .rb-방장{background:#FEF9C3;color:#92400E}
+    .rb-부방장{background:#EDE9FE;color:#6D28D9}
+    .rb-관리자{background:#DCFCE7;color:#15803D}
+    .admin-name{font-size:14px;font-weight:600;flex:1}
+    .admin-acts-row{display:flex;gap:5px}
+    .admin-act-btn{padding:5px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;font-family:inherit;color:var(--t2)}
+    .admin-act-btn.danger{color:#DC2626;border-color:#FECACA}
+    .add-admin-btn{margin:4px 22px 22px;padding:13px;border:2px dashed var(--border);border-radius:13px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--t2);font-family:inherit;width:calc(100% - 44px)}
+
+    /* Profile section */
+    .profile-info{padding:16px 22px;display:flex;flex-direction:column;gap:12px}
+    .pf-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#F8FAFC;border-radius:11px}
+    .pf-label{font-size:11px;color:var(--t3);font-weight:600}
+    .pf-val{font-size:14px;font-weight:600}
+
+    /* Notification badge */
+    .notif-b{background:#DC2626;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-left:4px;padding:0 3px}
+
+    /* Pending rows */
+    .pending-sec{padding:14px 22px 6px}
+    .pending-sec-title{font-size:13px;font-weight:700;color:#D97706;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .pending-row{display:flex;align-items:center;gap:10px;padding:11px 13px;background:#FFFBEB;border:1px solid #FCD34D;border-radius:11px;margin-bottom:8px}
+    .pending-info{flex:1}
+    .pending-name{font-size:14px;font-weight:700}
+    .pending-sub{font-size:11px;color:var(--t2);margin-top:2px}
+    .pending-date{font-size:10px;color:var(--t3);margin-top:1px}
+    .pending-btns{display:flex;gap:5px;flex-shrink:0}
+    .btn-approve{padding:6px 11px;background:#DCFCE7;color:#15803D;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+    .btn-reject{padding:6px 9px;background:#FEF2F2;color:#DC2626;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+    .panel-divider{height:1px;background:var(--border);margin:6px 22px 14px}
+
+    /* Club join area */
+    .join-area{padding:0 22px 18px}
+    .join-btn{width:100%;padding:13px;border:none;border-radius:13px;background:linear-gradient(135deg,#059669,#0F766E);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+    .join-pending-lbl{text-align:center;font-size:13px;color:#D97706;font-weight:600;padding:12px;background:#FFFBEB;border-radius:11px;border:1px dashed #FCD34D}
+
+    /* Leader pending in club modal */
+    .leader-pend-sec{padding:14px 22px 10px}
+    .leader-pend-title{font-size:14px;font-weight:700;color:#D97706;margin-bottom:10px}
+
+    /* Registration banner in profile */
+    .reg-banner{margin:16px 22px;padding:16px;background:#FFFBEB;border:1.5px solid #FCD34D;border-radius:14px;text-align:center}
+    .reg-banner-t{font-size:14px;font-weight:700;color:#92400E;margin-bottom:5px}
+    .reg-banner-d{font-size:12px;color:#B45309;margin-bottom:12px;line-height:1.5}
+    .reg-banner-btn{width:100%;padding:12px;border:none;border-radius:11px;background:linear-gradient(135deg,#D97706,#92400E);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+    .reg-pending-banner{margin:16px 22px;padding:14px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:14px;text-align:center;color:#15803D;font-size:13px;font-weight:600}
+
+    /* Public requests section */
+    .req-wrap{padding:6px 14px 16px}
+    .req-card{background:#fff;border-radius:var(--r);padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1.5px solid #E0E7FF}
+    .req-hdr{display:flex;align-items:center;gap:7px;margin-bottom:12px}
+    .req-hdr-title{font-size:14px;font-weight:700;color:#4F6EFF;flex:1}
+    .req-cnt-badge{background:#4F6EFF;color:#fff;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700}
+    .req-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F3F4F6}
+    .req-row:last-child{border-bottom:none}
+    .req-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+    .req-info{flex:1}
+    .req-name{font-size:13px;font-weight:700}
+    .req-detail{font-size:11px;color:var(--t2);margin-top:2px}
+    .req-date{font-size:10px;color:var(--t3);margin-top:1px}
+    .req-acts{display:flex;gap:5px;flex-shrink:0}
+    .req-status{font-size:11px;color:#D97706;font-weight:600;background:#FFFBEB;border-radius:6px;padding:3px 8px}
+
+    /* Approval log */
+    .log-row{display:flex;align-items:center;gap:8px;padding:9px 13px;background:#F8FAFC;border-radius:10px;margin-bottom:6px}
+    .log-icon{font-size:16px}
+
+    /* Admin panel tabs */
+    .admin-tab-bar{display:flex;gap:6px;padding:12px 16px 0}
+    .admin-tab{flex:1;padding:9px 4px;border:none;border-radius:20px;background:#F3F4F6;color:var(--t2);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;text-align:center}
+    .admin-tab.active{background:var(--pri);color:#fff}
+    .admin-tab-content{display:none}
+    .admin-tab-content.visible{display:block}
+
+    /* Dashboard club cards */
+    .db-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin:0 14px 10px;overflow:hidden}
+    .db-card-hdr{display:flex;align-items:center;gap:10px;cursor:pointer}
+    .db-club-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .db-club-name{font-size:14px;font-weight:700;flex:1}
+    .db-status-badge{border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;white-space:nowrap}
+    .db-status-active{background:#DCFCE7;color:#15803D}
+    .db-status-prep{background:#FEF9C3;color:#92400E}
+    .db-member-cnt{font-size:12px;color:var(--t2);font-weight:600;white-space:nowrap}
+    .db-leader-pill{background:#EEF2FF;color:var(--pri);border-radius:20px;padding:2px 9px;font-size:11px;font-weight:600;white-space:nowrap}
+    .db-chevron{font-size:13px;color:var(--t3);margin-left:4px;transition:transform .2s}
+    .db-chevron.open{transform:rotate(180deg)}
+    .db-card-body{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+    .db-info-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;font-size:12px;color:var(--t2)}
+    .db-info-item{display:flex;align-items:center;gap:4px}
+    .db-edit-btn{width:100%;padding:10px;border:1.5px solid var(--pri);border-radius:10px;background:#EEF2FF;color:var(--pri);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:12px}
+    .db-mem-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+    .db-mem-chip{display:inline-flex;align-items:center;gap:4px;background:#F3F4F6;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:500}
+    .db-chip-x{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;line-height:1;padding:0;font-weight:700}
+    .db-chip-x:hover{color:#DC2626}
+    .db-add-row{display:flex;gap:8px;margin-bottom:4px}
+    .db-add-input{flex:1;padding:8px 11px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;outline:none}
+    .db-add-input:focus{border-color:var(--pri)}
+    .db-add-btn{padding:8px 14px;border:none;border-radius:9px;background:var(--pri);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap}
+    .db-add-err{font-size:11px;color:#DC2626;min-height:14px;margin-bottom:8px}
+    .db-pend-title{font-size:12px;font-weight:700;color:#D97706;margin:10px 0 6px;display:flex;align-items:center;gap:5px}
+    .db-empty-mem{font-size:12px;color:var(--t3);padding:6px 0;font-style:italic}
+    .log-info{flex:1}
+    .log-main{font-size:12px;font-weight:600}
+    .log-sub{font-size:10px;color:var(--t3);margin-top:1px}
+    .log-by{font-size:11px;color:#4F6EFF;font-weight:600}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="hdr">
+    <div class="hdr-top">
+      <div class="user-pill" id="user-pill" onclick="openProfile()">👤 <span id="user-name-lbl">-</span></div>
+      <div class="hdr-right">
+        <button class="hdr-btn" id="admin-btn" onclick="openAdminLogin()">🔑 관리자</button>
+        <a class='hdr-btn' href='/guide' style='text-decoration:none' target='_blank'>❓</a>
+        <button class="hdr-btn" onclick="logout()">전환</button>
+      </div>
+    </div>
+    <div class="hdr-sub">분당우리교회 4청년부</div>
+    <h1>동아리 게시판</h1>
+    <div class="hdr-stats">
+      <div class="stat" style="cursor:pointer" onclick="openStatPopup('active')"><div class="stat-n" id="s-active">0</div><div class="stat-l">런칭 ›</div></div>
+      <div class="stat" style="cursor:pointer" onclick="openStatPopup('preparing')"><div class="stat-n" id="s-prep">0</div><div class="stat-l">준비중 ›</div></div>
+      <div class="stat" style="cursor:pointer" onclick="openStatPopup('waiting')"><div class="stat-n" id="s-wait">0</div><div class="stat-l">대기 ›</div></div>
+    </div>
+    <div id="period-banner" style="display:none;margin-top:8px;font-size:11px;font-weight:700;text-align:center;padding:5px 12px;border-radius:20px;background:rgba(255,255,255,0.2)"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hdr"><div class="sec-title">런칭된 동아리</div><div class="sec-badge ba" id="b-active">0개</div></div>
+    <div class="grid" id="active-clubs"></div>
+  </div>
+
+  <div class="section" style="padding-top:22px" id="prep-section">
+    <div class="sec-hdr"><div class="sec-title">준비중인 동아리</div><div class="sec-badge bp" id="b-prep">0개</div></div>
+    <div class="grid" id="prep-clubs"></div>
+  </div>
+
+  <!-- 신청 현황 (모든 로그인 사용자 공개) -->
+  <div class="req-wrap" id="req-wrap" style="display:none">
+    <div class="req-card">
+      <div class="req-hdr">
+        <span style="font-size:18px">📋</span>
+        <div class="req-hdr-title">신청 현황</div>
+        <div class="req-cnt-badge" id="req-cnt">0건</div>
+      </div>
+      <div id="req-list"></div>
+    </div>
+  </div>
+
+  <div class="abs-wrap">
+    <div class="abs-card">
+      <div class="abs-hdr"><span style="font-size:19px">⏳</span><div class="abs-title">동아리 신청 대기자</div></div>
+      <div class="abs-grid" id="abs-grid"></div>
+    </div>
+  </div>
+</div>
+
+<button class="fab" id="fab" onclick="openNewClubForm()">＋</button>
+
+<!-- ── Club detail sheet ── -->
+<div class="ov" id="clubOv" onclick="closeOv('clubOv',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="modal-hero">
+      <div class="modal-icon" id="m-icon"></div>
+      <div>
+        <div class="modal-t" id="m-title"></div>
+        <div class="modal-p" id="m-purp"></div>
+        <div class="tag-row">
+          <div class="tag tag-l">👑 <span id="m-ldr"></span> 이장</div>
+          <div class="tag tag-s" id="m-stat"></div>
+        </div>
+      </div>
+    </div>
+    <div class="info-grid">
+      <div class="ic"><div class="ic-l">📅 정기 모임</div><div class="ic-v" id="m-sch"></div></div>
+      <div class="ic"><div class="ic-l">📍 장소</div><div class="ic-v" id="m-loc"></div></div>
+      <div class="ic"><div class="ic-l">🔄 주기</div><div class="ic-v" id="m-frq"></div></div>
+      <div class="ic"><div class="ic-l">🎯 목적</div><div class="ic-v" id="m-purp2"></div></div>
+      <div class="ic" id="m-manager-row"><div class="ic-l">👤 담당 관리자</div><div class="ic-v" id="m-manager"></div></div>
+    </div>
+    <div id="m-note"></div>
+    <!-- Edit button for leader / admin -->
+    <div id="club-edit-area" style="display:none;margin-bottom:10px">
+      <button class="join-btn" style="background:linear-gradient(135deg,#4F6EFF,#7C3AED);margin-bottom:0" onclick="openEditClubInfo()">✏️ 동아리 정보 수정</button>
+    </div>
+
+    <div class="divider"></div>
+    <div class="mem-sec">
+      <div class="mem-title">회원 명단 <span class="cnt-b" id="m-cnt"></span></div>
+      <div id="m-members"></div>
+    </div>
+    <!-- Club join request area (for non-members) -->
+    <div class="join-area" id="club-join-area" style="display:none"></div>
+
+    <!-- Leader: add member directly -->
+    <div id="leader-add-sec" style="display:none">
+      <div class="divider" style="margin:0 -22px 14px"></div>
+      <div class="leader-pend-title">➕ 회원 직접 추가 (이장·관리자 전용)</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input class="db-add-input" id="leader-add-inp" placeholder="이름 입력" maxlength="10"
+               onkeydown="if(event.key==='Enter')leaderAddMember()">
+        <button class="db-add-btn" onclick="leaderAddMember()">추가</button>
+      </div>
+      <div class="db-add-err" id="leader-add-err"></div>
+    </div>
+
+    <!-- Leader pending approvals -->
+    <div class="leader-pend-sec" id="leader-pending-sec" style="display:none">
+      <div class="divider" style="margin:0 -22px 14px"></div>
+      <div class="leader-pend-title">⏳ 가입 신청 현황 (이장·관리자 전용)</div>
+      <div id="leader-pending-list"></div>
+    </div>
+
+    <div class="admin-acts" id="club-admin-acts" style="display:none">
+      <button class="act-btn act-toggle" id="btn-toggle" onclick="doToggleStatus()"></button>
+      <button class="act-btn act-del" onclick="doDeleteClub()">🗑 삭제</button>
+      <button class="act-btn" id="btn-change-leader" style="display:none;background:#EEF2FF;color:var(--pri)" onclick="openChangeLeader()">👑 이장 변경</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Stat popup ── -->
+<div class="ov center" id="statPopOv" onclick="closeOv('statPopOv',event)">
+  <div class="ccard" style="width:92%;max-width:400px;max-height:80vh;overflow-y:auto">
+    <div style="padding:20px 20px 6px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:800" id="stat-pop-title"></div>
+      <button class="sheet-close" onclick="closeOv('statPopOv')">✕</button>
+    </div>
+    <div id="stat-pop-body" style="padding:6px 20px 20px"></div>
+  </div>
+</div>
+
+<!-- ── Edit club info sheet ── -->
+<div class="ov" id="editClubOv" onclick="closeOv('editClubOv',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">동아리 정보 수정</div><button class="sheet-close" onclick="closeOv('editClubOv')">✕</button></div>
+    <div style="padding:16px 22px 32px;display:flex;flex-direction:column;gap:14px">
+      <div><label class="f-label">🎯 목적</label><input class="f-input" id="ec-purp" placeholder="활동 목적" maxlength="60"></div>
+      <div class="f-row2">
+        <div><label class="f-label">📅 정기 모임</label><input class="f-input" id="ec-sch" placeholder="토요일 14:00" maxlength="30"></div>
+        <div><label class="f-label">🔄 주기</label><input class="f-input" id="ec-frq" placeholder="격주" maxlength="20"></div>
+      </div>
+      <div><label class="f-label">📍 장소</label><input class="f-input" id="ec-loc" placeholder="드림센터 1층" maxlength="40"></div>
+      <div id="ec-manager-row" style="display:none">
+        <label class="f-label">👤 담당 관리자</label>
+        <select class="f-input" id="ec-manager"></select>
+      </div>
+      <button class="join-btn" style="background:linear-gradient(135deg,#4F6EFF,#7C3AED);margin-top:4px" onclick="saveClubEdit()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change leader overlay -->
+<div class="ov center" id="changeLeaderOv" onclick="closeOv('changeLeaderOv',event)">
+  <div class="ccard" style="width:88%;max-width:380px">
+    <div style="padding:22px 22px 8px;font-size:16px;font-weight:800">👑 이장 변경</div>
+    <div style="padding:0 22px 22px">
+      <label class="f-label" style="margin-bottom:6px">새 이장 이름</label>
+      <select class="f-input" id="leader-sel" style="margin-bottom:8px"></select>
+      <input class="f-input" id="leader-custom" placeholder="또는 직접 입력" maxlength="10" style="margin-bottom:12px">
+      <div style="display:flex;gap:8px">
+        <button class="conf-btn conf-cancel" onclick="closeOv('changeLeaderOv')">취소</button>
+        <button class="conf-btn conf-ok" onclick="saveLeaderChange()">변경</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Member popup ── -->
+<div class="ov center" id="memOv" onclick="closeOv('memOv',event)">
+  <div class="ccard">
+    <div class="mem-pop">
+      <div class="pop-av" id="p-av"></div>
+      <div class="pop-name" id="p-name"></div>
+      <div class="pop-tags"><div class="pop-tag" id="p-gen"></div><div class="pop-tag" id="p-yr"></div></div>
+      <div class="pop-ph-l">연락처</div>
+      <div id="p-ph-wrap"></div>
+      <button class="pop-edit-btn" id="p-edit-btn" onclick="openEditMember()" style="display:none">✏️ 정보 수정</button>
+      <button class="pop-close" onclick="closeOv('memOv')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Profile sheet (내 정보) ── -->
+<div class="ov" id="profileOv" onclick="closeOv('profileOv',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">내 정보</div><button class="sheet-close" onclick="closeOv('profileOv')">✕</button></div>
+    <div id="profile-reg-banner"></div>
+    <div class="profile-info" id="profile-info"></div>
+    <div id="profile-actions" style="padding:0 22px 24px;display:flex;gap:8px">
+      <button class="f-submit" style="margin:0;flex:1" onclick="openEditMyInfo()">✏️ 내 정보 수정</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit member info ── -->
+<div class="ov" id="editMemOv" onclick="closeOv('editMemOv',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title" id="edit-title">정보 수정</div><button class="sheet-close" onclick="closeOv('editMemOv')">✕</button></div>
+    <div class="form-body">
+      <div><label class="f-label">이름 (변경 불가)</label><input class="f-input" id="ef-name" disabled></div>
+      <div>
+        <label class="f-label">성별</label>
+        <div class="seg" id="ef-gender-seg">
+          <button class="seg-btn" onclick="selGender('남')">남자</button>
+          <button class="seg-btn" onclick="selGender('여')">여자</button>
+        </div>
+      </div>
+      <div><label class="f-label">또래 (출생연도 뒷 2자리)</label><input class="f-input" id="ef-year" placeholder="예) 90" maxlength="2" type="tel"></div>
+      <div><label class="f-label">연락처</label><input class="f-input" id="ef-phone" placeholder="010-0000-0000" maxlength="13" type="tel"></div>
+    </div>
+    <div class="f-err" id="ef-err"></div>
+    <button class="f-submit" onclick="saveEditMember()">저장</button>
+  </div>
+</div>
+
+<!-- ── Admin login ── -->
+<div class="ov center" id="adminLoginOv" onclick="closeOv('adminLoginOv',event)">
+  <div class="ccard">
+    <div style="padding:26px 22px">
+      <div style="font-size:28px;text-align:center;margin-bottom:8px">🔑</div>
+      <div style="font-size:17px;font-weight:800;text-align:center;margin-bottom:18px">관리자 로그인</div>
+      <label class="f-label">이름</label>
+      <input class="f-input" id="al-name" placeholder="관리자 이름" maxlength="10" onkeydown="if(event.key==='Enter')doAdminLogin()">
+      <label class="f-label" style="margin-top:12px">비밀번호</label>
+      <input class="f-input" id="al-pw" type="password" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doAdminLogin()">
+      <div class="f-err" id="al-err"></div>
+      <button class="f-submit" style="margin:12px 0 0" onclick="doAdminLogin()">로그인</button>
+      <button class="pop-close" style="margin-top:8px" onclick="closeOv('adminLoginOv')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Admin management sheet ── -->
+<div class="ov" id="adminMgmtOv" onclick="closeOv('adminMgmtOv',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">관리자 패널</div><button class="sheet-close" onclick="closeOv('adminMgmtOv')">✕</button></div>
+
+    <!-- Tab bar -->
+    <div class="admin-tab-bar">
+      <button class="admin-tab active" id="atab-dashboard" onclick="switchAdminTab('dashboard')">📊 현황판</button>
+      <button class="admin-tab" id="atab-approvals" onclick="switchAdminTab('approvals')">⏳ 승인 대기</button>
+      <button class="admin-tab" id="atab-admins" onclick="switchAdminTab('admins')">👑 관리자 관리</button>
+    </div>
+
+    <!-- Tab 1: 현황판 -->
+    <div class="admin-tab-content visible" id="atab-content-dashboard">
+      <div style="padding:12px 14px 4px;font-size:13px;font-weight:700;color:var(--t2)">전체 동아리 현황</div>
+      <div id="dashboard-clubs" style="padding-bottom:16px"></div>
+    </div>
+
+    <!-- Tab 2: 승인 대기 -->
+    <div class="admin-tab-content" id="atab-content-approvals">
+      <!-- Pending member registrations -->
+      <div class="pending-sec" id="pending-mem-sec" style="display:none">
+        <div class="pending-sec-title">👤 회원 등록 승인 대기</div>
+        <div id="pending-mem-list"></div>
+      </div>
+
+      <!-- Pending club join requests (leaderless clubs) -->
+      <div class="pending-sec" id="pending-club-sec" style="display:none">
+        <div class="pending-sec-title">🏷 동아리 가입 신청 현황 (전체)</div>
+        <div id="pending-club-list"></div>
+      </div>
+
+      <div class="panel-divider" id="panel-div" style="display:none"></div>
+
+      <!-- Approval log (방장/부방장 only) -->
+      <div id="approval-log-sec" style="display:none">
+        <div style="padding:10px 22px 4px;font-size:13px;font-weight:700;color:var(--t2)">승인 이력 모니터링</div>
+        <div style="padding:0 22px 8px" id="approval-log-list"></div>
+      </div>
+
+      <div id="approvals-empty" style="display:none;text-align:center;padding:32px 22px;color:var(--t3);font-size:14px">대기 중인 승인 요청이 없습니다.</div>
+    </div>
+
+    <!-- Tab 3: 관리자 관리 -->
+    <div class="admin-tab-content" id="atab-content-admins">
+      <!-- Period settings — 방장/부방장 only -->
+      <div id="period-settings-sec" style="display:none;padding:14px 22px 0">
+        <div style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:10px">📅 동아리 신청기간 설정</div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:6px" id="period-today-lbl"></div>
+        <div class="f-row2" style="margin-bottom:10px">
+          <div><label class="f-label">시작일</label><input class="f-input" type="date" id="period-start"></div>
+          <div><label class="f-label">종료일</label><input class="f-input" type="date" id="period-end"></div>
+        </div>
+        <div id="period-status-lbl" style="font-size:12px;font-weight:600;padding:4px 0 10px"></div>
+        <button class="f-submit" style="margin:0 0 16px" onclick="savePeriodSettings()">신청기간 저장</button>
+        <div style="height:1px;background:var(--border);margin:0 -22px 14px"></div>
+      </div>
+      <div style="padding:10px 22px 4px;font-size:13px;font-weight:700;color:var(--t2)">관리자 관리</div>
+      <div class="admin-list" id="admin-list"></div>
+      <button class="add-admin-btn" id="add-admin-btn" onclick="openAddAdmin()">+ 관리자 추가</button>
+      <!-- Change pw inline form -->
+      <div id="admin-pw-form" style="display:none;padding:0 22px 22px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px" id="apf-title"></div>
+        <input class="f-input" id="apf-pw" type="password" placeholder="새 비밀번호">
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="conf-btn conf-cancel" onclick="document.getElementById('admin-pw-form').style.display='none'">취소</button>
+          <button class="conf-btn conf-ok" onclick="saveAdminPw()">변경</button>
+        </div>
+      </div>
+      <!-- Add admin form -->
+      <div id="add-admin-form" style="display:none;padding:0 22px 22px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">새 관리자 추가</div>
+        <input class="f-input" id="aaf-name" placeholder="이름" maxlength="10" style="margin-bottom:8px">
+        <input class="f-input" id="aaf-pw" type="password" placeholder="비밀번호" style="margin-bottom:8px">
+        <div class="seg" id="aaf-role-seg" style="margin-bottom:8px">
+          <button class="seg-btn sel" onclick="selNewRole('관리자')">관리자</button>
+          <button class="seg-btn" onclick="selNewRole('부방장')" id="btn-role-vl">부방장</button>
+        </div>
+        <div class="f-err" id="aaf-err"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="conf-btn conf-cancel" onclick="closeAddAdminForm()">취소</button>
+          <button class="conf-btn conf-ok" onclick="saveNewAdmin()">추가</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── New Club form ── -->
+<div class="ov" id="newClubOv" onclick="closeOv('newClubOv',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">새 동아리 추가</div><button class="sheet-close" onclick="closeOv('newClubOv')">✕</button></div>
+    <div class="form-body">
+      <div><label class="f-label">동아리 이름 *</label><input class="f-input" id="nc-name" placeholder="예) 풋살 동아리" maxlength="20"></div>
+      <div><label class="f-label">아이콘</label><div class="emoji-grid" id="nc-emoji"></div></div>
+      <div><label class="f-label">색상</label><div class="c-grid" id="nc-color"></div></div>
+      <div><label class="f-label">이장</label><input class="f-input" id="nc-leader" placeholder="미정" maxlength="10"></div>
+      <div><label class="f-label">활동 목적</label><input class="f-input" id="nc-purp" placeholder="소개" maxlength="50"></div>
+      <div class="f-row2">
+        <div><label class="f-label">정기 모임</label><input class="f-input" id="nc-sch" placeholder="토요일 14:00" maxlength="30"></div>
+        <div><label class="f-label">주기</label><input class="f-input" id="nc-frq" placeholder="격주" maxlength="20"></div>
+      </div>
+      <div><label class="f-label">장소</label><input class="f-input" id="nc-loc" placeholder="드림센터 1층" maxlength="30"></div>
+      <div><label class="f-label">비고</label><input class="f-input" id="nc-note" placeholder="특이사항" maxlength="50"></div>
+    </div>
+    <div class="f-err" id="nc-err"></div>
+    <button class="f-submit" onclick="submitNewClub()">준비중으로 추가</button>
+  </div>
+</div>
+
+<!-- ── Confirm ── -->
+<div class="ov center" id="confOv">
+  <div class="ccard">
+    <div class="conf-box">
+      <div class="conf-ico" id="cf-ico"></div>
+      <div class="conf-t" id="cf-t"></div>
+      <div class="conf-d" id="cf-d"></div>
+      <div class="conf-btns">
+        <button class="conf-btn conf-cancel" onclick="closeOv('confOv')">취소</button>
+        <button class="conf-btn" id="cf-ok" onclick="runConfirm()"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Member Registration sheet ── -->
+<div class="ov" id="regOv" onclick="closeOv('regOv',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">회원 등록 신청</div><button class="sheet-close" onclick="closeOv('regOv')">✕</button></div>
+    <div class="form-body">
+      <div><label class="f-label">이름 (변경 불가)</label><input class="f-input" id="rf-name" disabled></div>
+      <div>
+        <label class="f-label">성별</label>
+        <div class="seg" id="rf-gender-seg">
+          <button class="seg-btn" onclick="selRegGender('남')">남자</button>
+          <button class="seg-btn" onclick="selRegGender('여')">여자</button>
+        </div>
+      </div>
+      <div><label class="f-label">또래 (출생연도 뒷 2자리)</label><input class="f-input" id="rf-year" placeholder="예) 90" maxlength="2" type="tel"></div>
+      <div><label class="f-label">연락처</label><input class="f-input" id="rf-phone" placeholder="010-0000-0000" maxlength="13" type="tel"></div>
+    </div>
+    <div class="f-err" id="rf-err"></div>
+    <button class="f-submit" onclick="submitMemberReg()">승인 요청 보내기</button>
+  </div>
+</div>
+
+<!-- ── Login ── -->
+<div class="login-ov" id="loginOv">
+  <div class="login-logo">⛪</div>
+  <div class="login-title">4청 동아리 게시판</div>
+  <div class="login-sub">분당우리교회 4청년부<br>이름을 입력하고 접속하세요</div>
+  <div class="login-card">
+    <div class="login-card-title">이름 입력</div>
+    <input class="f-input" id="li-name" placeholder="본인 이름을 입력하세요" maxlength="12"
+           oninput="document.getElementById('li-err').textContent=''"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-err" id="li-err"></div>
+    <button class="login-btn" onclick="doLogin()">접속하기</button>
+    <div class="login-hint">새가족도 이름으로 접속 가능 · 회원 등록은 접속 후 신청</div>
+  </div>
+</div>
+
+<script>
+/* ═══ CONSTANTS ═══ */
+const CLUBS_KEY = '4q_clubs_v4';
+const ADMINS_KEY = '4q_admins_v1';
+const CUSTOM_KEY = '4q_custom_v1';
+const PENDING_MEM_KEY = '4q_pending_mem_v1';
+const PENDING_CLUB_KEY = '4q_pending_club_v1';
+const APPROVAL_LOG_KEY = '4q_approval_log_v1';
+const PERIOD_KEY = '4q_period_v1';
+
+const EMOJI_LIST = ['💻','🎸','⛰️','🤝','⚡','☕','📖','🏃','🏀','📚','⚽','🎨','🎭','🎵','🍳','✈️','🌿','🙏','📷','🎮','🏊','🎯','🤸','🧘'];
+const COLOR_PAL = [
+  {c:'#4F6EFF',b:'#EEF2FF'},{c:'#7C3AED',b:'#F5F3FF'},{c:'#059669',b:'#ECFDF5'},
+  {c:'#DB2777',b:'#FDF2F8'},{c:'#D97706',b:'#FFFBEB'},{c:'#DC2626',b:'#FEF2F2'},
+  {c:'#0284C7',b:'#F0F9FF'},{c:'#0F766E',b:'#F0FDFA'},{c:'#92400E',b:'#FEF3C7'},
+  {c:'#6D28D9',b:'#EDE9FE'}
+];
+
+/* ═══ MEMBER DB ═══ */
+const memberDB = {
+  "구희원":{year:"82",gender:"남",phone:"010-4240-1091"},
+  "권용구":{year:"83",gender:"남",phone:"010-5646-9509"},
+  "김경욱":{year:"77",gender:"남",phone:"010-4245-4389"},
+  "김남송":{year:"78",gender:"남",phone:"010-5135-0435"},
+  "김대철":{year:"83",gender:"남",phone:"010-8680-2361"},
+  "김명수":{year:"80",gender:"남",phone:"010-4166-1256"},
+  "김미강":{year:"81",gender:"여",phone:"010-8706-4312"},
+  "김미진":{year:"80",gender:"여",phone:"010-3262-1856"},
+  "김민주":{year:"81",gender:"여",phone:"010-4180-5787"},
+  "김상미":{year:"82",gender:"여",phone:"010-7443-2780"},
+  "김신애":{year:"81",gender:"여",phone:"010-9109-1159"},
+  "김신영":{year:"81",gender:"여",phone:"010-3297-7113"},
+  "김숙영":{year:"83",gender:"여",phone:"010-6703-2080"},
+  "김원태":{year:"82",gender:"남",phone:"010-6396-3603"},
+  "김정훈":{year:"80",gender:"남",phone:"010-2907-2076"},
+  "김지숙":{year:"80",gender:"여",phone:"010-8605-8247"},
+  "김지연":{year:"77",gender:"여",phone:"010-2578-4156"},
+  "배경진":{year:"83",gender:"여",phone:"010-8244-1586"},
+  "배주원":{year:"79",gender:"여",phone:"010-9021-5358"},
+  "박수경":{year:"77",gender:"여",phone:"010-3270-7685"},
+  "박영인":{year:"82",gender:"남",phone:"010-4313-4620"},
+  "박혜주":{year:"80",gender:"여",phone:"010-9095-1910"},
+  "서미라":{year:"76",gender:"여",phone:"010-7322-8001"},
+  "손혜성":{year:"79",gender:"여",phone:"010-2999-4604"},
+  "신기현":{year:"77",gender:"남",phone:"010-2598-7580"},
+  "신은영":{year:"81",gender:"여",phone:"010-7200-8169"},
+  "양윤정":{year:"77",gender:"여",phone:"010-8668-3974"},
+  "연규민":{year:"81",gender:"남",phone:"010-9572-0919"},
+  "우희경":{year:"76",gender:"여",phone:"010-8983-9523"},
+  "윤일묵":{year:"80",gender:"남",phone:"010-7799-2225"},
+  "윤주혜":{year:"80",gender:"여",phone:"010-8926-9668"},
+  "윤혜진":{year:"76",gender:"여",phone:"010-2317-1525"},
+  "이기홍":{year:"79",gender:"남",phone:"010-8552-7137"},
+  "이민아":{year:"78",gender:"여",phone:"010-3125-7755"},
+  "이시화":{year:"78",gender:"여",phone:"010-7400-2696"},
+  "이은빈":{year:"82",gender:"여",phone:"010-6711-1324"},
+  "이은주":{year:"77",gender:"여",phone:"010-9503-7606"},
+  "이지원":{year:"83",gender:"남",phone:"010-5254-4734"},
+  "이지혜":{year:"83",gender:"여",phone:"010-3709-4039"},
+  "이종환":{year:"82",gender:"남",phone:"010-5166-7412"},
+  "이혜연":{year:"82",gender:"여",phone:"010-3345-0278"},
+  "임유진":{year:"81",gender:"여",phone:"010-7331-5812"},
+  "유정화":{year:"81",gender:"여",phone:"010-6304-3442"},
+  "장시연":{year:"77",gender:"여",phone:"010-5185-7942"},
+  "장형지":{year:"78",gender:"여",phone:"010-8902-5556"},
+  "전소현":{year:"81",gender:"여",phone:"010-7511-1373"},
+  "정민협":{year:"82",gender:"남",phone:"010-3227-9236"},
+  "정삼용":{year:"82",gender:"남",phone:"010-2809-6753"},
+  "정신영":{year:"79",gender:"여",phone:"010-9472-1221"},
+  "정상혁":{year:"80",gender:"남",phone:"010-0000-0000"},
+  "조용민":{year:"82",gender:"여",phone:"010-8993-2759"},
+  "조은교":{year:"82",gender:"여",phone:"010-2711-9007"},
+  "최명진":{year:"82",gender:"남",phone:"010-6300-7330"},
+  "최주영":{year:"77",gender:"여",phone:"010-2548-7727"},
+  "최지원":{year:"82",gender:"여",phone:"010-3271-4238"},
+  "채정호":{year:"77",gender:"남",phone:"010-8330-1980"},
+  "표명석":{year:"77",gender:"남",phone:"010-5311-9855"},
+  "한성욱":{year:"79",gender:"남",phone:"010-5144-7433"},
+  "한지민":{year:"82",gender:"여",phone:"010-3462-4244"},
+  "홍영민":{year:"80",gender:"여",phone:"010-6565-0312"},
+  "홍지윤":{year:"78",gender:"여",phone:"010-9828-2669"},
+  "황인영":{year:"80",gender:"여",phone:"010-2689-9218"},
+};
+
+const DEFAULT_CLUBS = [
+  {status:'active',name:'AI 배우기',icon:'💻',color:'#4F6EFF',bg:'#EEF2FF',leader:'권용구',purpose:'초보부터 앱 만들기까지',location:'미정',schedule:'일요일 16:00',frequency:'격주',note:'임시 동아리장',manager:'',members:['권용구','김대철','김숙영','박혜주','양윤정','우희경','윤혜진','이시화']},
+  {status:'active',name:'분당우리밴드',icon:'🎸',color:'#7C3AED',bg:'#F5F3FF',leader:'이지원',purpose:'악기 레슨, 음악회, 재능기부',location:'미정',schedule:'토요일 13:00',frequency:'격주',note:'기타(Guitar) 동아리 통합',manager:'',members:['이지원','김대철','김숙영','이지혜']},
+  {status:'active',name:'산으로 가는 믿음',icon:'⛰️',color:'#059669',bg:'#ECFDF5',leader:'채정호',purpose:'등산으로 체력증진',location:'국내산',schedule:'토요일',frequency:'월 1회',note:'임시 동아리장',manager:'',members:['채정호','권용구','김지연','신기현','양윤정','윤혜진','우희경','이은주','정민협','홍영민']},
+  {status:'active',name:'선한 손길',icon:'🤝',color:'#DB2777',bg:'#FDF2F8',leader:'채정호',purpose:'봉사 및 선한 영향력 퍼뜨리기',location:'드림센터 1층',schedule:'토요일 오전',frequency:'월 1회',note:'콩알 동아리 통합',manager:'',members:['채정호','배경진','홍영민']},
+  {status:'active',name:'액티풀 라이프',icon:'⚡',color:'#D97706',bg:'#FFFBEB',leader:'홍영민',purpose:'체력증진과 스트레스 해소',location:'드림센터 1층',schedule:'둘째주 토요일 14:00',frequency:'월 1회',note:'빛과 이야기, 은혜스매시 등 다수 통합',manager:'',members:['홍영민','구희원','김대철','김숙영','김원태','김정훈','박혜주','손혜성','양윤정','연규민','우희경','윤일묵','이민아','이시화','이은빈','이종환','정삼용','최명진','최지원','채정호','황인영']},
+  {status:'active',name:'카/공/차/밥',icon:'☕',color:'#92400E',bg:'#FEF3C7',leader:'윤일묵',purpose:'공부·독서·작업 후 같이 식사',location:'서현 카페',schedule:'토요일 13:00~17:30',frequency:'월 1~2회',note:'',manager:'',members:['윤일묵','김대철','배주원','조용민']},
+  {status:'active',name:'큐티&말씀암송',icon:'📖',color:'#B45309',bg:'#FFFBEB',leader:'이민아',purpose:'묵상 나눔과 교제로 말씀 암송',location:'드림센터 1층',schedule:'토요일 10:00',frequency:'격주',note:'동아리 통합',manager:'',members:['이민아','박수경','박영인']},
+  {status:'active',name:'런포티',icon:'🏃',color:'#DC2626',bg:'#FEF2F2',leader:'미정',purpose:'초보 러닝, 5km 마라톤 도전',location:'분당',schedule:'평일 저녁 19:00 이후',frequency:'주 2회 이상',note:'확인 필요',manager:'',members:['김정훈']},
+  {status:'active',name:'에어워커 (농구)',icon:'🏀',color:'#0284C7',bg:'#F0F9FF',leader:'미정',purpose:'1청~4청 연합 동아리',location:'동천동 실내체육관',schedule:'마지막주 토요일 20:00',frequency:'월 1회',note:'연합 동아리 인계',manager:'',members:['박영인']},
+  {status:'active',name:'독서모임',icon:'📚',color:'#0F766E',bg:'#F0FDFA',leader:'정상혁',purpose:'독서를 통한 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['김지연','홍지윤','강선배','김민주','김신영','장시연','표명석','채정호','김상미','김신애','서미라','손혜성','윤주혜','김미진','허진선','조은교','신기현','우희경','이민아','최주영','전소현']},
+  {status:'preparing',name:'카페인과 은혜 사이',icon:'☕',color:'#C2410C',bg:'#FFF7ED',leader:'미정',purpose:'카페 탐방 및 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['임유진','김상미','이기홍','김남송','김신애','최지원','채정호','배주원','박수경','윤혜진','최명진']},
+  {status:'preparing',name:'은혜로운 식탁',icon:'🍜',color:'#D97706',bg:'#FFFBEB',leader:'미정',purpose:'맛집 탐방 및 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['황인영','정삼용','정신영','조용민','김정훈','채정호','배주원','윤혜진','장시연','이혜연']},
+  {status:'preparing',name:'멍 동아리',icon:'🌳',color:'#16A34A',bg:'#F0FDF4',leader:'미정',purpose:'자연에서 쉬며 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['신은영','조용민','박혜주','홍영민','김남송','윤혜진','채정호','이시화','장시연','이혜연','유정화']},
+  {status:'preparing',name:'워킹 위드 갓',icon:'👣',color:'#0369A1',bg:'#E0F2FE',leader:'미정',purpose:'함께 산책하며 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['임유진','조용민','김남송','장형지','양윤정','윤혜진','최주영','장시연','이혜연','유정화']},
+  {status:'preparing',name:'우리랜드',icon:'🎲',color:'#6D28D9',bg:'#EDE9FE',leader:'미정',purpose:'보드게임으로 함께 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['이종환','황인영','정삼용','조용민','권용구','채정호','이지원','장시연']},
+];
+
+const DEFAULT_ADMINS = [
+  {name:'정상혁', pw:'2004', role:'방장'},
+  {name:'김지숙', pw:'0000', role:'부방장'},
+];
+
+const ABSENTEES = ['김경욱','김남송','김명수','김미강','김상미','김신애','김신영','신은영','유정화','윤주혜','이기홍','이혜연','임유진','장시연','장형지','정신영','조은교','최주영','한성욱','한지민'];
+
+/* ═══ STATE ═══ */
+let clubs, admins, customMembers, pendingMembers, pendingClubReqs, approvalLog;
+let auth = { name:null, baseAccess:'guest', isAdmin:false, adminRole:null };
+let appPeriod = { start: '', end: '' };
+let curClubIdx = -1;
+let curEditName = null;
+let pendingConfirm = null;
+let ncEmoji = EMOJI_LIST[0], ncColorIdx = 0;
+let editGender = null;
+let regGender = null;
+let newAdminRole = '관리자';
+let pwTargetName = null;
+
+function load() {
+  try { clubs = JSON.parse(localStorage.getItem(CLUBS_KEY)) || JSON.parse(JSON.stringify(DEFAULT_CLUBS)); } catch { clubs = JSON.parse(JSON.stringify(DEFAULT_CLUBS)); }
+  try { admins = JSON.parse(localStorage.getItem(ADMINS_KEY)) || JSON.parse(JSON.stringify(DEFAULT_ADMINS)); } catch { admins = JSON.parse(JSON.stringify(DEFAULT_ADMINS)); }
+  try { customMembers = JSON.parse(localStorage.getItem(CUSTOM_KEY)) || {}; } catch { customMembers = {}; }
+  try { pendingMembers = JSON.parse(localStorage.getItem(PENDING_MEM_KEY)) || []; } catch { pendingMembers = []; }
+  try { pendingClubReqs = JSON.parse(localStorage.getItem(PENDING_CLUB_KEY)) || []; } catch { pendingClubReqs = []; }
+  try { approvalLog = JSON.parse(localStorage.getItem(APPROVAL_LOG_KEY)) || []; } catch { approvalLog = []; }
+  try { appPeriod = JSON.parse(localStorage.getItem(PERIOD_KEY)) || { start:'', end:'' }; } catch { appPeriod = { start:'', end:'' }; }
+}
+function saveClubs() { localStorage.setItem(CLUBS_KEY, JSON.stringify(clubs)); }
+function saveAdmins() { localStorage.setItem(ADMINS_KEY, JSON.stringify(admins)); }
+function saveCustom() { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customMembers)); }
+function savePendingMem() { localStorage.setItem(PENDING_MEM_KEY, JSON.stringify(pendingMembers)); }
+function savePendingClub() { localStorage.setItem(PENDING_CLUB_KEY, JSON.stringify(pendingClubReqs)); }
+function saveApprovalLog() { localStorage.setItem(APPROVAL_LOG_KEY, JSON.stringify(approvalLog)); }
+function savePeriod() { localStorage.setItem(PERIOD_KEY, JSON.stringify(appPeriod)); }
+function localDateStr() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+function isApplicationOpen() {
+  if (!appPeriod.start || !appPeriod.end) return true; // 기간 미설정 시 기본 오픈
+  const today = localDateStr();
+  return today >= appPeriod.start && today <= appPeriod.end;
+}
+function periodStatusText() {
+  if (!appPeriod.start || !appPeriod.end) return { label:'🟢 신청기간 미설정 (기본 오픈)', color:'#059669' };
+  const today = localDateStr();
+  if (today < appPeriod.start) return { label:'신청기간 전', color:'#6B7280' };
+  if (today <= appPeriod.end) return { label:'🟢 신청기간 중', color:'#059669' };
+  return { label:'🔴 신청기간 종료', color:'#DC2626' };
+}
+function recordApproval(type, name, clubName, action) {
+  approvalLog.unshift({ type, name, clubName: clubName||null, action, approvedBy: auth.name||auth.adminRole, approvedAt: new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) });
+  if (approvalLog.length > 100) approvalLog = approvalLog.slice(0, 100);
+  saveApprovalLog();
+}
+
+/* ═══ MEMBER INFO ═══ */
+function getMember(name) {
+  const base = memberDB[name] || { year:'-', gender:'-', phone:'-' };
+  const custom = customMembers[name] || {};
+  return { ...base, ...custom };
+}
+function isInDB(name) { return name in memberDB || name in customMembers; }
+function isInClub(name) { return clubs.some(c => c.members.includes(name)); }
+
+/* ═══ ACCESS ═══ */
+// 'guest' = sees club + member names only
+// 'viewer' = same (in memberDB but not in club, or unknown name)
+// 'member' = sees own club full info
+function getBaseAccess(name) {
+  if (!name || name === '새가족') return 'guest';
+  if (isInClub(name)) return 'member';
+  return 'viewer'; // any other name → viewer
+}
+function canSeeDetail(clubIdx, memberName) {
+  if (auth.isAdmin) return true;
+  const club = clubs[clubIdx];
+  if (!club) return false;
+  // 이장은 자기 동아리 모든 회원 정보 열람 가능
+  if (auth.name && auth.name === club.leader && club.leader !== '미정') return true;
+  if (auth.baseAccess === 'member')
+    return club.members.includes(auth.name) && club.members.includes(memberName);
+  return false;
+}
+function canEditMember(name) {
+  if (auth.adminRole === '방장' || auth.adminRole === '부방장') return true;
+  if (auth.name === name) return true; // 본인
+  // 담당 관리자: 해당 회원이 속한 동아리의 담당 관리자이면 가능
+  if (auth.isAdmin && clubs.some(c => c.members.includes(name) && c.manager === auth.name)) return true;
+  return false;
+}
+
+/* ═══ PENDING HELPERS ═══ */
+function isRegistered(name) { return (name in memberDB) || (name in customMembers); }
+function isPendingReg(name) { return pendingMembers.some(p => p.name === name); }
+function isPendingClub(name, clubName) { return pendingClubReqs.some(r => r.memberName === name && r.clubName === clubName); }
+function adminPendingCount() {
+  return pendingMembers.length + pendingClubReqs.length;
+}
+
+/* ═══ MEMBER REGISTRATION ═══ */
+function openMemberRegForm() {
+  if (!auth.name || auth.name === '새가족') return;
+  regGender = null;
+  document.getElementById('rf-name').value = auth.name;
+  document.getElementById('rf-year').value = '';
+  document.getElementById('rf-phone').value = '';
+  document.getElementById('rf-err').textContent = '';
+  document.querySelectorAll('#rf-gender-seg .seg-btn').forEach(b => b.classList.remove('sel'));
+  closeOv('profileOv');
+  openOv('regOv');
+}
+function selRegGender(g) {
+  regGender = g;
+  document.querySelectorAll('#rf-gender-seg .seg-btn').forEach(b =>
+    b.classList.toggle('sel', (b.textContent === '남자' && g === '남') || (b.textContent === '여자' && g === '여'))
+  );
+}
+function submitMemberReg() {
+  const name = auth.name;
+  const yr = document.getElementById('rf-year').value.trim();
+  const ph = document.getElementById('rf-phone').value.trim();
+  if (!regGender) { document.getElementById('rf-err').textContent = '성별을 선택해주세요.'; return; }
+  if (!yr || isNaN(yr) || yr.length > 2) { document.getElementById('rf-err').textContent = '또래는 2자리 숫자(예: 90)로 입력해주세요.'; return; }
+  if (!ph) { document.getElementById('rf-err').textContent = '연락처를 입력해주세요.'; return; }
+  if (isPendingReg(name)) { document.getElementById('rf-err').textContent = '이미 승인 요청이 접수되어 있습니다.'; return; }
+  pendingMembers.push({ name, gender: regGender, year: yr, phone: ph, requestedAt: new Date().toLocaleDateString('ko-KR') });
+  savePendingMem();
+  closeOv('regOv');
+  showConfirm('✅', '요청 완료', '관리자에게 회원 등록 요청을 보냈습니다.\n승인 후 회원으로 등록됩니다.', 'ok', '확인', () => {});
+  updateAdminBtn();
+}
+function approveMember(name) {
+  const p = pendingMembers.find(x => x.name === name);
+  if (!p) return;
+  if (!customMembers[name]) customMembers[name] = {};
+  customMembers[name].gender = p.gender;
+  customMembers[name].year = p.year;
+  customMembers[name].phone = p.phone;
+  saveCustom();
+  recordApproval('member', name, null, 'approve');
+  pendingMembers = pendingMembers.filter(x => x.name !== name);
+  savePendingMem();
+  renderAdminApprovals();
+  renderRequests();
+  renderAll();
+}
+function rejectMember(name) {
+  showConfirm('⚠️', '등록 거절', `"${name}"의 회원 등록 요청을 거절할까요?`, 'danger', '거절', () => {
+    recordApproval('member', name, null, 'reject');
+    pendingMembers = pendingMembers.filter(x => x.name !== name);
+    savePendingMem();
+    renderAdminApprovals();
+    renderRequests();
+  });
+}
+
+/* ═══ CLUB JOIN REQUESTS ═══ */
+function submitClubJoin(clubIdx) {
+  if (!auth.name || auth.name === '새가족') return;
+  if (!isApplicationOpen()) {
+    showConfirm('🔒', '신청기간 종료', '현재 동아리 신청기간이 아닙니다.', 'ok', '확인', () => {});
+    return;
+  }
+  const club = clubs[clubIdx];
+  if (!club) return;
+  if (isPendingClub(auth.name, club.name)) return;
+
+  const joinedCount = clubs.filter(c => c.members.includes(auth.name)).length;
+  const pendingCount = pendingClubReqs.filter(r => r.memberName === auth.name).length;
+  if (joinedCount + pendingCount >= 3) {
+    showConfirm('⚠️', '신청 제한', '동아리는 최대 3개까지만 신청이 가능합니다.', 'ok', '확인', () => {});
+    return;
+  }
+
+  pendingClubReqs.push({ memberName: auth.name, clubName: club.name, requestedAt: new Date().toLocaleDateString('ko-KR') });
+  savePendingClub();
+  updateAdminBtn();
+  openClub(clubIdx);
+}
+function leaderKickMember(clubIdx, name) {
+  const club = clubs[clubIdx];
+  showConfirm('✕', '회원 탈퇴', `"${name}"님을 "${club.name}"에서 탈퇴시키겠습니까?`, 'danger', '탈퇴', () => {
+    clubs[clubIdx].members = clubs[clubIdx].members.filter(n => n !== name);
+    saveClubs();
+    renderAll();
+    openClub(clubIdx);
+  });
+}
+
+function leaderAddMember() {
+  const inp = document.getElementById('leader-add-inp');
+  const err = document.getElementById('leader-add-err');
+  const name = inp.value.trim();
+  if (!name) { err.textContent = '이름을 입력하세요.'; return; }
+  const club = clubs[curClubIdx];
+  if (club.members.includes(name)) { err.textContent = '이미 동아리 회원입니다.'; return; }
+  club.members.push(name);
+  if (!(name in memberDB) && !(name in customMembers)) {
+    customMembers[name] = { year: '-', gender: '-', phone: '-' };
+    localStorage.setItem('4q_custom_v1', JSON.stringify(customMembers));
+  }
+  saveClubs();
+  inp.value = '';
+  err.textContent = '';
+  openClub(curClubIdx);
+}
+
+function leaveClub(clubIdx) {
+  const club = clubs[clubIdx];
+  if (!club) return;
+  showConfirm('🚪', '동아리 탈퇴', `"${club.name}"에서 탈퇴하시겠습니까?\n탈퇴 후 재가입은 이장의 승인이 필요합니다.`, 'danger', '탈퇴', () => {
+    clubs[clubIdx].members = clubs[clubIdx].members.filter(n => n !== auth.name);
+    saveClubs();
+    closeOv('clubOv');
+    renderAll();
+  });
+}
+
+function approveClubJoin(memberName, clubName) {
+  const idx = clubs.findIndex(c => c.name === clubName);
+  if (idx < 0) return;
+  if (!clubs[idx].members.includes(memberName)) { clubs[idx].members.push(memberName); saveClubs(); }
+  recordApproval('club', memberName, clubName, 'approve');
+  pendingClubReqs = pendingClubReqs.filter(r => !(r.memberName === memberName && r.clubName === clubName));
+  savePendingClub();
+  renderAdminApprovals();
+  renderRequests();
+  renderAll();
+  if (curClubIdx === idx) openClub(idx);
+}
+function rejectClubJoin(memberName, clubName) {
+  showConfirm('⚠️', '신청 거절', `"${memberName}"의 "${clubName}" 가입 신청을 거절할까요?`, 'danger', '거절', () => {
+    recordApproval('club', memberName, clubName, 'reject');
+    pendingClubReqs = pendingClubReqs.filter(r => !(r.memberName === memberName && r.clubName === clubName));
+    savePendingClub();
+    renderAdminApprovals();
+    renderRequests();
+    const idx = clubs.findIndex(c => c.name === clubName);
+    if (curClubIdx === idx) openClub(idx);
+  });
+}
+
+/* ═══ PUBLIC REQUESTS RENDER ═══ */
+function renderRequests() {
+  const wrap = document.getElementById('req-wrap');
+  if (!auth.name) { wrap.style.display = 'none'; return; }
+
+  const allReqs = [
+    ...pendingMembers.map(p => ({ type:'member', name:p.name, detail:'회원 등록 신청 중', date:p.requestedAt, gender:p.gender })),
+    ...pendingClubReqs.map(r => ({ type:'club', name:r.memberName, detail:`${r.clubName} 가입 신청 중`, date:r.requestedAt, clubName:r.clubName }))
+  ];
+
+  if (allReqs.length === 0) { wrap.style.display = 'none'; return; }
+
+  wrap.style.display = '';
+  document.getElementById('req-cnt').textContent = allReqs.length + '건';
+  const list = document.getElementById('req-list');
+  list.innerHTML = '';
+
+  allReqs.forEach(req => {
+    const gc = req.gender === '남' ? 'm' : req.gender === '여' ? 'f' : 'u';
+    const avStyle = gc==='m' ? 'background:#DBEAFE;color:#1D4ED8' : gc==='f' ? 'background:#FCE7F3;color:#BE185D' : 'background:#F3F4F6;color:#6B7280';
+    const typeIcon = req.type === 'member' ? '👤' : '🏷';
+
+    // 승인 버튼: 관리자 전체, 이장은 자기 동아리만
+    const canApprove = auth.isAdmin ||
+      (req.type === 'club' && auth.name === (clubs.find(c=>c.name===req.clubName)||{}).leader && auth.name !== '미정');
+
+    const btns = canApprove
+      ? req.type === 'member'
+        ? `<button class="btn-approve" onclick="approveMember('${req.name}')">승인</button><button class="btn-reject" onclick="rejectMember('${req.name}')">거절</button>`
+        : `<button class="btn-approve" onclick="approveClubJoin('${req.name}','${req.clubName}')">승인</button><button class="btn-reject" onclick="rejectClubJoin('${req.name}','${req.clubName}')">거절</button>`
+      : `<span class="req-status">대기중</span>`;
+
+    const d = document.createElement('div');
+    d.className = 'req-row';
+    d.innerHTML = `
+      <div class="req-av" style="${avStyle}">${typeIcon}</div>
+      <div class="req-info">
+        <div class="req-name">${req.name}</div>
+        <div class="req-detail">${req.detail}</div>
+        <div class="req-date">${req.date}</div>
+      </div>
+      <div class="req-acts">${btns}</div>`;
+    list.appendChild(d);
+  });
+}
+
+/* ═══ ADMIN APPROVALS RENDER ═══ */
+function renderAdminApprovals() {
+  // Pending member registrations
+  const memSec = document.getElementById('pending-mem-sec');
+  const memList = document.getElementById('pending-mem-list');
+  memSec.style.display = pendingMembers.length > 0 ? '' : 'none';
+  memList.innerHTML = '';
+  pendingMembers.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'pending-row';
+    d.innerHTML = `<div class="pending-info">
+      <div class="pending-name">${p.name}</div>
+      <div class="pending-sub">${p.gender||'-'} · ${p.year||'-'}또래 · ${p.phone||'-'}</div>
+      <div class="pending-date">신청일: ${p.requestedAt}</div>
+    </div>
+    <div class="pending-btns">
+      <button class="btn-approve" onclick="approveMember('${p.name}')">승인</button>
+      <button class="btn-reject" onclick="rejectMember('${p.name}')">거절</button>
+    </div>`;
+    memList.appendChild(d);
+  });
+
+  // 전체 동아리 가입 신청 현황 (관리자)
+  const clubSec = document.getElementById('pending-club-sec');
+  const clubList = document.getElementById('pending-club-list');
+  const adminReqs = pendingClubReqs;
+  clubSec.style.display = adminReqs.length > 0 ? '' : 'none';
+  clubList.innerHTML = '';
+  adminReqs.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'pending-row';
+    d.innerHTML = `<div class="pending-info">
+      <div class="pending-name">${r.memberName}</div>
+      <div class="pending-sub">신청 동아리: ${r.clubName}</div>
+      <div class="pending-date">신청일: ${r.requestedAt}</div>
+    </div>
+    <div class="pending-btns">
+      <button class="btn-approve" onclick="approveClubJoin('${r.memberName}','${r.clubName}')">승인</button>
+      <button class="btn-reject" onclick="rejectClubJoin('${r.memberName}','${r.clubName}')">거절</button>
+    </div>`;
+    clubList.appendChild(d);
+  });
+
+  const hasPending = pendingMembers.length > 0 || adminReqs.length > 0;
+  document.getElementById('panel-div').style.display = hasPending ? '' : 'none';
+  const emptyEl = document.getElementById('approvals-empty');
+  if (emptyEl) emptyEl.style.display = hasPending ? 'none' : '';
+
+  // 승인 이력 (방장/부방장만)
+  const logSec = document.getElementById('approval-log-sec');
+  if ((auth.adminRole === '방장' || auth.adminRole === '부방장') && approvalLog.length > 0) {
+    logSec.style.display = '';
+    const logList = document.getElementById('approval-log-list');
+    logList.innerHTML = '';
+    approvalLog.slice(0, 30).forEach(l => {
+      const isApprove = l.action === 'approve';
+      const typeLabel = l.type === 'member' ? '회원 등록' : `동아리 가입 (${l.clubName})`;
+      const d = document.createElement('div');
+      d.className = 'log-row';
+      d.innerHTML = `
+        <div class="log-icon">${isApprove ? '✅' : '❌'}</div>
+        <div class="log-info">
+          <div class="log-main">${l.name} — ${typeLabel}</div>
+          <div class="log-sub">${l.approvedAt}</div>
+        </div>
+        <div class="log-by">${l.approvedBy}</div>`;
+      logList.appendChild(d);
+    });
+  } else {
+    logSec.style.display = 'none';
+  }
+
+  updateAdminBtn();
+}
+
+/* ═══ LOGIN ═══ */
+function doLogin() {
+  const name = document.getElementById('li-name').value.trim();
+  if (!name) { document.getElementById('li-err').textContent = '이름을 입력해주세요.'; return; }
+  auth.name = name;
+  auth.baseAccess = getBaseAccess(name);
+  auth.isAdmin = false;
+  auth.adminRole = null;
+  document.getElementById('loginOv').classList.add('hidden');
+  document.body.style.overflow = '';
+  document.getElementById('user-name-lbl').textContent = name;
+  updateAdminBtn();
+  renderAll();
+  renderRequests();
+}
+
+function doAdminLogin() {
+  const name = document.getElementById('al-name').value.trim();
+  const pw = document.getElementById('al-pw').value;
+  const admin = admins.find(a => a.name === name && a.pw === pw);
+  if (!admin) { document.getElementById('al-err').textContent = '이름 또는 비밀번호가 올바르지 않습니다.'; return; }
+  auth.isAdmin = true;
+  auth.adminRole = admin.role;
+  closeOv('adminLoginOv');
+  document.getElementById('al-name').value = '';
+  document.getElementById('al-pw').value = '';
+  document.getElementById('al-err').textContent = '';
+  updateAdminBtn();
+  if (auth.isAdmin) document.getElementById('fab').classList.add('show');
+  renderAll();
+}
+
+function updateAdminBtn() {
+  const btn = document.getElementById('admin-btn');
+  const cnt = adminPendingCount();
+  const badge = cnt > 0 ? `<span class="notif-b">${cnt}</span>` : '';
+  if (auth.isAdmin) {
+    btn.innerHTML = `🔑 ${auth.adminRole}${badge}`;
+    btn.className = 'hdr-btn admin-active-pill';
+    btn.onclick = openAdminPanel;
+  } else {
+    btn.innerHTML = `🔑 관리자${badge}`;
+    btn.className = 'hdr-btn';
+    btn.onclick = openAdminLogin;
+  }
+}
+
+function openAdminLogin() {
+  document.getElementById('al-name').value = '';
+  document.getElementById('al-pw').value = '';
+  document.getElementById('al-err').textContent = '';
+  openOv('adminLoginOv');
+}
+
+/* ═══ ADMIN TAB SWITCHING ═══ */
+function switchAdminTab(tab) {
+  ['dashboard','approvals','admins'].forEach(t => {
+    document.getElementById('atab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('atab-content-' + t).classList.toggle('visible', t === tab);
+  });
+}
+
+/* ═══ DASHBOARD RENDER ═══ */
+let expandedDashCards = new Set();
+
+function renderDashboard() {
+  const container = document.getElementById('dashboard-clubs');
+  container.innerHTML = '';
+  const sorted = clubs
+    .map((c, i) => ({ c, i }))
+    .sort((a, b) => {
+      if (a.c.status === b.c.status) return 0;
+      return a.c.status === 'active' ? -1 : 1;
+    });
+
+  sorted.forEach(({ c: club, i: idx }) => {
+    const isExpanded = expandedDashCards.has(idx);
+    const statusBadge = club.status === 'active'
+      ? '<span class="db-status-badge db-status-active">런칭</span>'
+      : '<span class="db-status-badge db-status-prep">준비중</span>';
+
+    const card = document.createElement('div');
+    card.className = 'db-card';
+    card.id = 'db-card-' + idx;
+
+    // Build member chips
+    const memberChips = (club.members || []).length > 0
+      ? (club.members).map(name =>
+          `<span class="db-mem-chip">${name}<button class="db-chip-x" onclick="dbRemoveMember(${idx},'${name.replace(/'/g,"\\'")}')">✕</button></span>`
+        ).join('')
+      : '<span class="db-empty-mem">회원 없음</span>';
+
+    // Pending requests for this club
+    const clubPending = pendingClubReqs.filter(r => r.clubName === club.name);
+    const pendingHTML = clubPending.length > 0
+      ? `<div class="db-pend-title">⏳ 가입 신청 대기 (${clubPending.length})</div>` +
+        clubPending.map(r =>
+          `<div class="pending-row" style="margin-bottom:6px">
+            <div class="pending-info">
+              <div class="pending-name">${r.memberName}</div>
+              <div class="pending-date">신청일: ${r.requestedAt}</div>
+            </div>
+            <div class="pending-btns">
+              <button class="btn-approve" onclick="approveClubJoin('${r.memberName.replace(/'/g,"\\'")}','${r.clubName.replace(/'/g,"\\'")}');renderDashboard()">승인</button>
+              <button class="btn-reject" onclick="rejectClubJoin('${r.memberName.replace(/'/g,"\\'")}','${r.clubName.replace(/'/g,"\\'")}');renderDashboard()">거절</button>
+            </div>
+          </div>`
+        ).join('')
+      : '';
+
+    card.innerHTML = `
+      <div class="db-card-hdr" onclick="dbToggleCard(${idx})">
+        <div class="db-club-icon" style="background:${club.bg||'#EEF2FF'}">${club.icon||'🎯'}</div>
+        <div class="db-club-name">${club.name}</div>
+        ${statusBadge}
+        <span class="db-member-cnt">${(club.members||[]).length}명</span>
+        <span class="db-leader-pill">${club.leader||'미정'}</span>
+        <span class="db-chevron${isExpanded?' open':''}">▾</span>
+      </div>
+      ${isExpanded ? `
+      <div class="db-card-body">
+        <div class="db-info-row">
+          <span class="db-info-item">📅 ${club.schedule||'미정'}</span>
+          <span class="db-info-item">📍 ${club.location||'미정'}</span>
+          <span class="db-info-item">🔄 ${club.frequency||'미정'}</span>
+        </div>
+        <button class="db-edit-btn" onclick="curClubIdx=${idx};openEditClubInfo()">✏️ 동아리 정보 수정</button>
+        <div class="db-mem-chips" id="db-chips-${idx}">${memberChips}</div>
+        <div class="db-add-row">
+          <input class="db-add-input" id="db-add-inp-${idx}" placeholder="회원 이름 입력" maxlength="10" onkeydown="if(event.key==='Enter')dbAddMember(${idx})">
+          <button class="db-add-btn" onclick="dbAddMember(${idx})">추가</button>
+        </div>
+        <div class="db-add-err" id="db-add-err-${idx}"></div>
+        ${pendingHTML}
+      </div>` : ''}
+    `;
+    container.appendChild(card);
+  });
+}
+
+function dbToggleCard(idx) {
+  if (expandedDashCards.has(idx)) {
+    expandedDashCards.delete(idx);
+  } else {
+    expandedDashCards.add(idx);
+  }
+  renderDashboard();
+}
+
+function dbRemoveMember(idx, name) {
+  clubs[idx].members = (clubs[idx].members || []).filter(n => n !== name);
+  saveClubs();
+  renderDashboard();
+}
+
+function dbAddMember(idx) {
+  const inp = document.getElementById('db-add-inp-' + idx);
+  const err = document.getElementById('db-add-err-' + idx);
+  if (!inp) return;
+  const name = inp.value.trim();
+  if (!name) { err.textContent = '이름을 입력하세요.'; return; }
+  if ((clubs[idx].members || []).includes(name)) {
+    err.textContent = '이미 동아리 회원입니다.'; return;
+  }
+  if (!clubs[idx].members) clubs[idx].members = [];
+  clubs[idx].members.push(name);
+  // memberDB에 없으면 customMembers에 기본 정보로 등록
+  if (!(name in memberDB) && !(name in customMembers)) {
+    customMembers[name] = { year: '-', gender: '-', phone: '-' };
+    localStorage.setItem('4q_custom_v1', JSON.stringify(customMembers));
+  }
+  saveClubs();
+  renderDashboard();
+}
+
+function openAdminPanel() {
+  if (auth.adminRole === '방장' || auth.adminRole === '부방장' || auth.adminRole === '관리자') {
+    renderDashboard();
+    renderAdminApprovals();
+    renderAdminList();
+    switchAdminTab('dashboard');
+    openOv('adminMgmtOv');
+  } else {
+    showConfirm('🔑', '관리자 해제', `관리자 모드를 해제하시겠습니까?`, 'ok', '해제', () => {
+      auth.isAdmin = false; auth.adminRole = null;
+      document.getElementById('fab').classList.remove('show');
+      updateAdminBtn(); renderAll();
+    });
+  }
+}
+
+function logout() {
+  auth = { name:null, baseAccess:'guest', isAdmin:false, adminRole:null };
+  document.getElementById('li-name').value = '';
+  document.getElementById('li-err').textContent = '';
+  document.getElementById('fab').classList.remove('show');
+  document.getElementById('loginOv').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+/* ═══ RENDER ═══ */
+function renderAll() {
+  updateAdminBtn();
+  renderPeriodStatus();
+  renderRequests();
+  ['active-clubs','prep-clubs','abs-grid'].forEach(id => document.getElementById(id).innerHTML = '');
+  const ac = clubs.filter(c=>c.status==='active').length;
+  const pc = clubs.filter(c=>c.status==='preparing').length;
+  document.getElementById('s-active').textContent = ac;
+  document.getElementById('s-prep').textContent = pc;
+  document.getElementById('s-wait').textContent = ABSENTEES.length;
+  document.getElementById('b-active').textContent = ac+'개';
+  document.getElementById('b-prep').textContent = pc+'개';
+  document.getElementById('prep-section').style.display = pc > 0 ? '' : 'none';
+
+  clubs.forEach((club, i) => {
+    const isMine = auth.baseAccess === 'member' && club.members.includes(auth.name);
+    const el = document.createElement('div');
+    el.className = 'card' + (isMine ? ' mine' : '');
+    if (club.status === 'preparing' && !isApplicationOpen() && !auth.isAdmin) {
+      el.innerHTML = `
+        <div class="card-icon" style="background:${club.bg}">${club.icon}</div>
+        <div class="card-name" style="color:var(--t2)">${club.name}</div>
+        <div class="card-sch" style="color:var(--t3);font-size:11px">준비중</div>`;
+      el.style.opacity = '0.55';
+      el.style.cursor = 'default';
+    } else {
+      el.innerHTML = `
+        <div class="status-dot${club.status==='preparing'?' p':''}"></div>
+        ${isMine ? '<div class="mine-badge">내 동아리</div>' : ''}
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${club.color};border-radius:3px 3px 0 0"></div>
+        <div class="card-icon" style="background:${club.bg}">${club.icon}</div>
+        <div class="card-name">${club.name}</div>
+        <div class="card-leader">${club.leader==='미정'?'이장 미정':'이장 '+club.leader}</div>
+        <div class="card-sch">${club.schedule}<br>${club.frequency}</div>
+        <div class="card-foot"><div class="card-cnt" style="color:${club.color}">${club.members.length}명</div><div class="card-arrow">›</div></div>`;
+      el.onclick = () => openClub(i);
+    }
+    document.getElementById(club.status==='active'?'active-clubs':'prep-clubs').appendChild(el);
+  });
+
+  if (!clubs.some(c=>c.status==='active'))
+    document.getElementById('active-clubs').innerHTML = '<div class="sec-empty">런칭된 동아리가 없습니다</div>';
+
+  // Absentee
+  const ag = document.getElementById('abs-grid');
+  ABSENTEES.forEach(name => {
+    const m = getMember(name);
+    const canSee = auth.isAdmin;
+    const el = document.createElement('div');
+    el.className = 'abs-item' + (canSee?' click':'');
+    el.innerHTML = `<div class="abs-n">${name}</div><div class="abs-i">${canSee?(m.gender||'-')+' · '+(m.year&&m.year!=='-'?m.year+'또래':'-'):'• • •'}</div>`;
+    if (canSee) el.onclick = () => openMemPopup(name, false);
+    ag.appendChild(el);
+  });
+}
+
+/* ═══ STAT POPUP ═══ */
+function openStatPopup(type) {
+  const titleEl = document.getElementById('stat-pop-title');
+  const bodyEl = document.getElementById('stat-pop-body');
+  bodyEl.innerHTML = '';
+
+  if (type === 'active') {
+    titleEl.textContent = '✅ 런칭된 동아리';
+    const activeClubs = clubs.filter(c => c.status === 'active');
+    activeClubs.forEach(club => {
+      const sec = document.createElement('div');
+      sec.style.cssText = 'margin-bottom:16px';
+      sec.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:20px">${club.icon}</span>
+        <span style="font-weight:700;font-size:14px;color:${club.color}">${club.name}</span>
+        <span style="font-size:12px;color:var(--t3)">${club.members.length}명</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${
+        club.members.map(n => `<span style="background:#F3F4F6;border-radius:16px;padding:4px 10px;font-size:12px">${n}</span>`).join('')
+        || '<span style="font-size:12px;color:var(--t3)">회원 없음</span>'
+      }</div>`;
+      bodyEl.appendChild(sec);
+    });
+
+  } else if (type === 'preparing') {
+    titleEl.textContent = '⏳ 준비중인 동아리';
+    const prepClubs = clubs.filter(c => c.status === 'preparing');
+    prepClubs.forEach(club => {
+      const sec = document.createElement('div');
+      sec.style.cssText = 'margin-bottom:16px';
+      sec.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:20px">${club.icon}</span>
+        <span style="font-weight:700;font-size:14px;color:${club.color}">${club.name}</span>
+        <span style="font-size:12px;color:var(--t3)">${club.members.length}명</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${
+        club.members.map(n => `<span style="background:#FEF9C3;border-radius:16px;padding:4px 10px;font-size:12px">${n}</span>`).join('')
+        || '<span style="font-size:12px;color:var(--t3)">회원 없음</span>'
+      }</div>`;
+      bodyEl.appendChild(sec);
+    });
+
+  } else if (type === 'waiting') {
+    titleEl.textContent = '⌛ 동아리 신청 대기자';
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+    ABSENTEES.forEach(name => {
+      const span = document.createElement('span');
+      span.style.cssText = 'background:#F3F4F6;border-radius:16px;padding:4px 10px;font-size:12px;cursor:pointer';
+      span.textContent = name;
+      if (auth.isAdmin) span.onclick = () => { closeOv('statPopOv'); openMemPopup(name, true); };
+      wrap.appendChild(span);
+    });
+    bodyEl.appendChild(wrap);
+  }
+
+  openOv('statPopOv');
+}
+
+/* ═══ CLUB MODAL ═══ */
+function openClub(idx) {
+  const club = clubs[idx];
+  if (club.status === 'preparing' && !isApplicationOpen() && !auth.isAdmin) return;
+  curClubIdx = idx;
+  const isMine = auth.baseAccess === 'member' && club.members.includes(auth.name);
+  const canSee = auth.isAdmin || isMine;
+
+  document.getElementById('m-icon').textContent = club.icon;
+  document.getElementById('m-icon').style.background = club.bg;
+  document.getElementById('m-title').textContent = club.name;
+  document.getElementById('m-title').style.color = club.color;
+  document.getElementById('m-purp').textContent = club.purpose;
+  document.getElementById('m-ldr').textContent = club.leader;
+  document.getElementById('m-sch').textContent = club.schedule;
+  document.getElementById('m-loc').textContent = club.location;
+  document.getElementById('m-frq').textContent = club.frequency;
+  document.getElementById('m-purp2').textContent = club.purpose || '-';
+  const mgr = club.manager || '미지정';
+  document.getElementById('m-manager').textContent = mgr;
+  document.getElementById('m-manager-row').style.display = club.manager ? '' : (auth.isAdmin ? '' : 'none');
+  document.getElementById('m-cnt').textContent = club.members.length + '명';
+  const sb = document.getElementById('m-stat');
+  sb.textContent = club.status==='active'?'✅ 런칭':'⏳ 준비중';
+  sb.className = 'tag tag-s ' + club.status;
+  document.getElementById('m-note').innerHTML = club.note ? `<div class="note-chip">📌 ${club.note}</div>` : '';
+
+  const mel = document.getElementById('m-members');
+  mel.innerHTML = '';
+  const canRemoveMember = auth.isAdmin || (auth.name === club.leader && club.leader !== '미정');
+  if (club.members.length === 0) {
+    mel.innerHTML = '<div class="empty-m">등록된 회원이 없습니다</div>';
+  } else {
+    club.members.forEach(name => {
+      const m = getMember(name);
+      const isLdr = name === club.leader;
+      const gc = m.gender==='남'?'m':m.gender==='여'?'f':'u';
+      const showFull = canSeeDetail(idx, name);
+      const div = document.createElement('div');
+      div.className = 'mem-row';
+      div.style.cursor = showFull || auth.isAdmin ? 'pointer' : 'default';
+      div.innerHTML = `
+        <div class="av ${gc}">${name.charAt(0)}</div>
+        <div class="mem-meta">
+          <div class="mem-nrow"><span class="mem-n">${name}</span>${isLdr?'<span class="l-pill">이장</span>':''}</div>
+          <div class="mem-sub">${showFull?(m.gender||'-')+' · '+(m.year&&m.year!=='-'?m.year+'또래':'-'):'이름만 공개'}</div>
+        </div>
+        ${showFull?`<div class="mem-ph">${m.phone&&m.phone!=='-'?m.phone:'미등록'}</div>`:'<div class="ph-hide">••••••</div>'}
+        ${canRemoveMember?`<button class="mem-kick-btn" onclick="event.stopPropagation();leaderKickMember(${idx},'${name.replace(/'/g,"\\'")}')">✕</button>`:''}`;
+      if (showFull || auth.isAdmin) div.onclick = () => openMemPopup(name, auth.isAdmin);
+      mel.appendChild(div);
+    });
+  }
+
+  // 가입 신청 / 탈퇴 버튼
+  const joinArea = document.getElementById('club-join-area');
+  const isInThisClub = club.members.includes(auth.name);
+  const isThisLeader = auth.name === club.leader && club.leader !== '미정';
+  if (!auth.isAdmin && !isThisLeader && auth.name && auth.name !== '새가족') {
+    joinArea.style.display = '';
+    if (isInThisClub) {
+      if (club.status === 'active') {
+        joinArea.innerHTML = `<button class="join-btn" style="background:linear-gradient(135deg,#DC2626,#B91C1C)" onclick="leaveClub(${idx})">🚪 동아리 탈퇴</button>`;
+      } else {
+        joinArea.innerHTML = '';
+      }
+    } else if (isPendingClub(auth.name, club.name)) {
+      joinArea.innerHTML = '<div class="join-pending-lbl">⏳ 가입 신청 완료 — 이장 승인 대기 중</div>';
+    } else if (isApplicationOpen()) {
+      joinArea.innerHTML = `<button class="join-btn" onclick="submitClubJoin(${idx})">✋ 이 동아리에 가입 신청</button>`;
+    } else {
+      joinArea.style.display = 'none';
+    }
+  } else {
+    joinArea.style.display = 'none';
+  }
+
+  // 이장 / 관리자 가입 신청 현황 섹션
+  const leaderSec = document.getElementById('leader-pending-sec');
+  const leaderList = document.getElementById('leader-pending-list');
+  const isLeader = auth.name === club.leader && club.leader !== '미정';
+  const myClubReqs = pendingClubReqs.filter(r => r.clubName === club.name);
+  if (isLeader || auth.isAdmin) {
+    leaderSec.style.display = '';
+    leaderList.innerHTML = '';
+    if (myClubReqs.length === 0) {
+      leaderList.innerHTML = '<div style="font-size:13px;color:var(--t3);padding:8px 0">현재 가입 신청 대기 중인 회원이 없습니다.</div>';
+    } else {
+      myClubReqs.forEach(r => {
+        const d = document.createElement('div');
+        d.className = 'pending-row';
+        d.innerHTML = `<div class="pending-info">
+          <div class="pending-name">${r.memberName}</div>
+          <div class="pending-date">신청일: ${r.requestedAt}</div>
+        </div>
+        <div class="pending-btns">
+          <button class="btn-approve" onclick="approveClubJoin('${r.memberName}','${r.clubName}')">승인</button>
+          <button class="btn-reject" onclick="rejectClubJoin('${r.memberName}','${r.clubName}')">거절</button>
+        </div>`;
+        leaderList.appendChild(d);
+      });
+    }
+  } else {
+    leaderSec.style.display = 'none';
+  }
+
+  // 회원 직접 추가 섹션: 이장 본인 또는 관리자
+  const leaderAddSec = document.getElementById('leader-add-sec');
+  leaderAddSec.style.display = (isLeader || auth.isAdmin) ? '' : 'none';
+  if (isLeader || auth.isAdmin) {
+    document.getElementById('leader-add-inp').value = '';
+    document.getElementById('leader-add-err').textContent = '';
+  }
+
+  // 정보 수정 버튼: 이장 본인 또는 관리자
+  const editArea = document.getElementById('club-edit-area');
+  editArea.style.display = (isLeader || auth.isAdmin) ? '' : 'none';
+
+  // 이장 변경 버튼 (방장/부방장 only)
+  const changeLeaderBtn = document.getElementById('btn-change-leader');
+  if (changeLeaderBtn) changeLeaderBtn.style.display = (auth.adminRole === '방장' || auth.adminRole === '부방장') ? '' : 'none';
+
+  const aa = document.getElementById('club-admin-acts');
+  if (auth.isAdmin) {
+    aa.style.display = 'flex';
+    const tb = document.getElementById('btn-toggle');
+    if (club.status==='active') { tb.textContent='⬇ 준비중으로 변경'; tb.className='act-btn act-toggle top'; }
+    else { tb.textContent='🚀 런칭으로 변경'; tb.className='act-btn act-toggle'; }
+  } else { aa.style.display='none'; }
+
+  openOv('clubOv');
+}
+
+function openEditClubInfo() {
+  const club = clubs[curClubIdx];
+  document.getElementById('ec-purp').value = club.purpose || '';
+  document.getElementById('ec-sch').value = club.schedule || '';
+  document.getElementById('ec-frq').value = club.frequency || '';
+  document.getElementById('ec-loc').value = club.location || '';
+  const ecMgrRow = document.getElementById('ec-manager-row');
+  const ecMgr = document.getElementById('ec-manager');
+  const canSetMgr = auth.adminRole === '방장' || auth.adminRole === '부방장';
+  ecMgrRow.style.display = canSetMgr ? '' : 'none';
+  if (canSetMgr) {
+    ecMgr.innerHTML = '<option value="">미지정</option>';
+    admins.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.name; opt.textContent = `${a.name} (${a.role})`;
+      if (a.name === club.manager) opt.selected = true;
+      ecMgr.appendChild(opt);
+    });
+  }
+  openOv('editClubOv');
+}
+function saveClubEdit() {
+  const purp = document.getElementById('ec-purp').value.trim();
+  const sch  = document.getElementById('ec-sch').value.trim();
+  const frq  = document.getElementById('ec-frq').value.trim();
+  const loc  = document.getElementById('ec-loc').value.trim();
+  const club = clubs[curClubIdx];
+  club.purpose  = purp  || club.purpose;
+  club.schedule = sch   || club.schedule;
+  club.frequency = frq  || club.frequency;
+  club.location = loc   || club.location;
+  const canSetMgr = auth.adminRole === '방장' || auth.adminRole === '부방장';
+  if (canSetMgr) club.manager = document.getElementById('ec-manager').value;
+  saveClubs();
+  renderAll();
+  closeOv('editClubOv');
+  openClub(curClubIdx);
+}
+
+function doToggleStatus() {
+  if (curClubIdx < 0) return;
+  const club = clubs[curClubIdx];
+  const to = club.status==='active'?'preparing':'active';
+  const lbl = to==='preparing'?'준비중으로 변경':'런칭으로 변경';
+  showConfirm('🔄', lbl, `"${club.name}"을(를) ${to==='preparing'?'준비중으로 내릴까요?':'런칭으로 올릴까요?'}`, 'ok', lbl, () => {
+    clubs[curClubIdx].status = to; saveClubs(); closeOv('clubOv'); renderAll();
+  });
+}
+function doDeleteClub() {
+  if (curClubIdx < 0) return;
+  const name = clubs[curClubIdx].name;
+  showConfirm('🗑','동아리 삭제',`"${name}"을(를) 삭제할까요? 복구할 수 없습니다.`,'danger','삭제',() => {
+    clubs.splice(curClubIdx, 1); curClubIdx=-1; saveClubs(); closeOv('clubOv'); renderAll();
+  });
+}
+
+/* ═══ CHANGE LEADER ═══ */
+function openChangeLeader() {
+  const club = clubs[curClubIdx];
+  const sel = document.getElementById('leader-sel');
+  sel.innerHTML = '<option value="">-- 회원 중 선택 --</option>';
+  club.members.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n; opt.textContent = n;
+    if (n === club.leader) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  document.getElementById('leader-custom').value = '';
+  openOv('changeLeaderOv');
+}
+function saveLeaderChange() {
+  const custom = document.getElementById('leader-custom').value.trim();
+  const sel = document.getElementById('leader-sel').value;
+  const newLeader = custom || sel || '';
+  if (!newLeader) { alert('이장 이름을 선택하거나 입력해주세요.'); return; }
+  clubs[curClubIdx].leader = newLeader;
+  saveClubs();
+  closeOv('changeLeaderOv');
+  renderAll();
+  openClub(curClubIdx);
+}
+
+/* ═══ MEMBER POPUP ═══ */
+function openMemPopup(name, allowEdit) {
+  curEditName = name;
+  const m = getMember(name);
+  const av = document.getElementById('p-av');
+  if (m.gender==='남') { av.style.background='#DBEAFE'; av.style.color='#1D4ED8'; }
+  else if (m.gender==='여') { av.style.background='#FCE7F3'; av.style.color='#BE185D'; }
+  else { av.style.background='#F3F4F6'; av.style.color='#6B7280'; }
+  av.textContent = name.charAt(0);
+  document.getElementById('p-name').textContent = name;
+  document.getElementById('p-gen').textContent = m.gender==='남'?'♂ 남자':m.gender==='여'?'♀ 여자':'-';
+  document.getElementById('p-yr').textContent = m.year&&m.year!=='-'?m.year+'또래':'-';
+
+  const canSeePhone = auth.isAdmin || clubs.some(c=>c.members.includes(auth.name)&&c.members.includes(name));
+  document.getElementById('p-ph-wrap').innerHTML = canSeePhone
+    ? `<div class="pop-ph">${m.phone&&m.phone!=='-'?m.phone:'미등록'}</div>`
+    : `<div class="pop-ph-hide">🔒 같은 동아리 회원만 볼 수 있습니다</div>`;
+
+  const editBtn = document.getElementById('p-edit-btn');
+  editBtn.style.display = canEditMember(name) ? 'block' : 'none';
+  openOv('memOv');
+}
+
+/* ═══ PROFILE (내 정보) ═══ */
+function openProfile() {
+  const name = auth.name;
+  if (!name) return;
+  const m = getMember(name);
+  const pi = document.getElementById('profile-info');
+  const banner = document.getElementById('profile-reg-banner');
+  const actions = document.getElementById('profile-actions');
+
+  pi.innerHTML = `
+    <div class="pf-row"><span class="pf-label">이름</span><span class="pf-val">${name}</span></div>
+    <div class="pf-row"><span class="pf-label">성별</span><span class="pf-val">${m.gender&&m.gender!=='-'?m.gender:'-'}</span></div>
+    <div class="pf-row"><span class="pf-label">또래</span><span class="pf-val">${m.year&&m.year!=='-'?m.year+'또래':'-'}</span></div>
+    <div class="pf-row"><span class="pf-label">연락처</span><span class="pf-val">${m.phone&&m.phone!=='-'?m.phone:'미등록'}</span></div>`;
+
+  if (name === '새가족') {
+    banner.innerHTML = '<div class="reg-banner"><div class="reg-banner-t">👋 새가족으로 접속 중</div><div class="reg-banner-d">실제 이름으로 다시 접속하면<br>회원 등록을 신청할 수 있습니다.</div></div>';
+    actions.style.display = 'none';
+  } else if (!isRegistered(name)) {
+    if (isPendingReg(name)) {
+      banner.innerHTML = '<div class="reg-pending-banner">⏳ 회원 등록 승인 대기 중입니다.<br>관리자 승인 후 회원으로 등록됩니다.</div>';
+      actions.style.display = 'none';
+    } else {
+      banner.innerHTML = `<div class="reg-banner">
+        <div class="reg-banner-t">📋 아직 회원 등록이 되지 않았습니다</div>
+        <div class="reg-banner-d">신상 정보를 입력하면 관리자에게<br>회원 등록 요청을 보낼 수 있습니다.</div>
+        <button class="reg-banner-btn" onclick="openMemberRegForm()">회원 등록 신청하기</button>
+      </div>`;
+      actions.style.display = 'none';
+    }
+  } else {
+    banner.innerHTML = '';
+    actions.style.display = '';
+  }
+
+  openOv('profileOv');
+}
+
+function openEditMyInfo() {
+  curEditName = auth.name;
+  closeOv('profileOv');
+  openEditForm(auth.name);
+}
+
+/* ═══ EDIT MEMBER ═══ */
+function openEditMember() {
+  openEditForm(curEditName);
+  closeOv('memOv');
+}
+
+function openEditForm(name) {
+  const m = getMember(name);
+  editGender = m.gender || null;
+  document.getElementById('edit-title').textContent = name + ' 정보 수정';
+  document.getElementById('ef-name').value = name;
+  document.getElementById('ef-year').value = (m.year&&m.year!=='-') ? m.year : '';
+  document.getElementById('ef-phone').value = (m.phone&&m.phone!=='-') ? m.phone : '';
+  document.getElementById('ef-err').textContent = '';
+  // gender seg
+  document.querySelectorAll('#ef-gender-seg .seg-btn').forEach(b => b.classList.remove('sel'));
+  if (m.gender === '남') document.querySelectorAll('#ef-gender-seg .seg-btn')[0].classList.add('sel');
+  else if (m.gender === '여') document.querySelectorAll('#ef-gender-seg .seg-btn')[1].classList.add('sel');
+  openOv('editMemOv');
+}
+
+function selGender(g) {
+  editGender = g;
+  document.querySelectorAll('#ef-gender-seg .seg-btn').forEach(b => b.classList.toggle('sel', b.textContent==='남자'&&g==='남' || b.textContent==='여자'&&g==='여'));
+}
+
+function saveEditMember() {
+  const name = document.getElementById('ef-name').value;
+  const yr = document.getElementById('ef-year').value.trim();
+  const ph = document.getElementById('ef-phone').value.trim();
+  if (yr && (isNaN(yr) || yr.length > 2)) { document.getElementById('ef-err').textContent='또래는 2자리 숫자(예: 90)로 입력해주세요.'; return; }
+  if (!customMembers[name]) customMembers[name] = {};
+  if (editGender) customMembers[name].gender = editGender;
+  if (yr) customMembers[name].year = yr;
+  if (ph) customMembers[name].phone = ph;
+  saveCustom();
+  closeOv('editMemOv');
+  renderAll();
+}
+
+/* ═══ PERIOD SETTINGS ═══ */
+function savePeriodSettings() {
+  const s = document.getElementById('period-start').value;
+  const e = document.getElementById('period-end').value;
+  if (!s || !e) { alert('시작일과 종료일을 모두 입력해주세요.'); return; }
+  if (s > e) { alert('시작일이 종료일보다 늦을 수 없습니다.'); return; }
+  appPeriod = { start: s.trim(), end: e.trim() };
+  savePeriod();
+  renderPeriodStatus();
+  renderAll();
+}
+function renderPeriodStatus() {
+  const st = periodStatusText();
+  // admin panel label
+  const lbl = document.getElementById('period-status-lbl');
+  if (lbl) lbl.textContent = st.label, lbl.style.color = st.color;
+  const todayLbl = document.getElementById('period-today-lbl');
+  if (todayLbl) todayLbl.textContent = '오늘: ' + localDateStr();
+  // main banner
+  const banner = document.getElementById('period-banner');
+  if (banner) {
+    if (!appPeriod.start) { banner.style.display = 'none'; return; }
+    banner.style.display = '';
+    banner.textContent = `신청기간: ${appPeriod.start} ~ ${appPeriod.end}  (${st.label})`;
+    banner.style.color = st.color === '#059669' ? '#fff' : 'rgba(255,255,255,0.85)';
+  }
+}
+
+/* ═══ ADMIN MANAGEMENT ═══ */
+function renderAdminList() {
+  const list = document.getElementById('admin-list');
+  list.innerHTML = '';
+  admins.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'admin-row';
+    const canChangePw = auth.adminRole === '방장' || (auth.adminRole === '부방장' && a.role !== '방장');
+    const canRemove = (auth.adminRole === '방장' && a.role !== '방장') || (auth.adminRole === '부방장' && a.role === '관리자');
+    row.innerHTML = `
+      <span class="admin-name">${a.name}</span>
+      <span class="admin-role-b rb-${a.role}">${a.role}</span>
+      <div class="admin-acts-row">
+        ${canChangePw?`<button class="admin-act-btn" onclick="startChangePw('${a.name}')">비번 변경</button>`:''}
+        ${canRemove?`<button class="admin-act-btn danger" onclick="removeAdmin('${a.name}')">해제</button>`:''}
+      </div>`;
+    list.appendChild(row);
+  });
+  // Add admin button
+  const canAdd = auth.adminRole === '방장' || auth.adminRole === '부방장';
+  document.getElementById('add-admin-btn').style.display = canAdd ? '' : 'none';
+  document.getElementById('admin-pw-form').style.display = 'none';
+  document.getElementById('add-admin-form').style.display = 'none';
+
+  // Period settings: 방장/부방장 only
+  const periodSec = document.getElementById('period-settings-sec');
+  if (periodSec) {
+    const canSetPeriod = auth.adminRole === '방장' || auth.adminRole === '부방장';
+    periodSec.style.display = canSetPeriod ? '' : 'none';
+    if (canSetPeriod) {
+      document.getElementById('period-start').value = appPeriod.start || '';
+      document.getElementById('period-end').value = appPeriod.end || '';
+      renderPeriodStatus();
+    }
+  }
+}
+
+function startChangePw(name) {
+  pwTargetName = name;
+  document.getElementById('apf-title').textContent = `${name}의 비밀번호 변경`;
+  document.getElementById('apf-pw').value = '';
+  document.getElementById('admin-pw-form').style.display = '';
+  document.getElementById('add-admin-form').style.display = 'none';
+}
+function saveAdminPw() {
+  const pw = document.getElementById('apf-pw').value;
+  if (!pw) return;
+  const a = admins.find(x => x.name === pwTargetName);
+  if (a) { a.pw = pw; saveAdmins(); }
+  // If changing own pw, update stays valid
+  document.getElementById('admin-pw-form').style.display = 'none';
+  renderAdminList();
+}
+
+function removeAdmin(name) {
+  showConfirm('⚠️','관리자 해제',`"${name}"의 관리자 권한을 해제할까요?`,'danger','해제',() => {
+    admins = admins.filter(a => a.name !== name);
+    saveAdmins();
+    renderAdminList();
+  });
+}
+
+function openAddAdmin() {
+  document.getElementById('aaf-name').value = '';
+  document.getElementById('aaf-pw').value = '';
+  document.getElementById('aaf-err').textContent = '';
+  newAdminRole = '관리자';
+  document.querySelectorAll('#aaf-role-seg .seg-btn').forEach((b,i) => b.classList.toggle('sel', i===0));
+  // 방장만 부방장 추가 가능
+  document.getElementById('btn-role-vl').style.display = auth.adminRole==='방장'?'':'none';
+  document.getElementById('add-admin-form').style.display = '';
+  document.getElementById('admin-pw-form').style.display = 'none';
+}
+function closeAddAdminForm() { document.getElementById('add-admin-form').style.display='none'; }
+function selNewRole(r) {
+  newAdminRole = r;
+  document.querySelectorAll('#aaf-role-seg .seg-btn').forEach(b => b.classList.toggle('sel', b.textContent===r));
+}
+function saveNewAdmin() {
+  const name = document.getElementById('aaf-name').value.trim();
+  const pw = document.getElementById('aaf-pw').value;
+  if (!name||!pw) { document.getElementById('aaf-err').textContent='이름과 비밀번호를 입력하세요.'; return; }
+  if (admins.some(a=>a.name===name)) { document.getElementById('aaf-err').textContent='이미 등록된 이름입니다.'; return; }
+  admins.push({name, pw, role: newAdminRole});
+  saveAdmins();
+  closeAddAdminForm();
+  renderAdminList();
+}
+
+/* ═══ NEW CLUB FORM ═══ */
+function openNewClubForm() {
+  ncEmoji = EMOJI_LIST[0]; ncColorIdx = 0;
+  ['nc-name','nc-leader','nc-purp','nc-sch','nc-frq','nc-loc','nc-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nc-err').textContent='';
+  const eg = document.getElementById('nc-emoji'); eg.innerHTML='';
+  EMOJI_LIST.forEach((e,i)=>{const b=document.createElement('button');b.className='e-opt'+(i===0?' sel':'');b.textContent=e;b.onclick=()=>{ncEmoji=e;document.querySelectorAll('#nc-emoji .e-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')};eg.appendChild(b)});
+  const cg = document.getElementById('nc-color'); cg.innerHTML='';
+  COLOR_PAL.forEach((c,i)=>{const b=document.createElement('button');b.className='c-opt'+(i===0?' sel':'');b.style.background=c.c;b.onclick=()=>{ncColorIdx=i;document.querySelectorAll('#nc-color .c-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')};cg.appendChild(b)});
+  openOv('newClubOv');
+}
+function submitNewClub() {
+  const name = document.getElementById('nc-name').value.trim();
+  if (!name) { document.getElementById('nc-err').textContent='동아리 이름은 필수입니다.'; return; }
+  if (clubs.some(c=>c.name===name)) { document.getElementById('nc-err').textContent='같은 이름의 동아리가 이미 있습니다.'; return; }
+  const pal = COLOR_PAL[ncColorIdx];
+  clubs.push({status:'preparing',name,icon:ncEmoji,color:pal.c,bg:pal.b,leader:document.getElementById('nc-leader').value.trim()||'미정',purpose:document.getElementById('nc-purp').value.trim(),location:document.getElementById('nc-loc').value.trim()||'미정',schedule:document.getElementById('nc-sch').value.trim()||'미정',frequency:document.getElementById('nc-frq').value.trim()||'미정',note:document.getElementById('nc-note').value.trim(),members:[]});
+  saveClubs(); closeOv('newClubOv'); renderAll();
+}
+
+/* ═══ CONFIRM ═══ */
+function showConfirm(ico, t, d, cls, lbl, fn) {
+  document.getElementById('cf-ico').textContent = ico;
+  document.getElementById('cf-t').textContent = t;
+  document.getElementById('cf-d').textContent = d;
+  const ok = document.getElementById('cf-ok');
+  ok.textContent = lbl;
+  ok.className = 'conf-btn ' + (cls==='danger'?'conf-danger':'conf-ok');
+  pendingConfirm = fn;
+  openOv('confOv');
+}
+function runConfirm() { closeOv('confOv'); if(pendingConfirm) pendingConfirm(); pendingConfirm=null; }
+
+/* ═══ OV HELPERS ═══ */
+function openOv(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function closeOv(id, e) {
+  if (e) {
+    const t = e.target;
+    if (t.id !== id && !t.classList.contains('ov')) return;
+  }
+  document.getElementById(id).classList.remove('open');
+  if (!document.querySelector('.ov.open')) document.body.style.overflow='';
+}
+
+/* ═══ MIGRATION ═══ */
+function migrateMissingClubs() {
+  let changed = false;
+  // 없는 동아리 추가
+  const toAdd = DEFAULT_CLUBS.filter(dc => !clubs.some(c => c.name === dc.name));
+  if (toAdd.length > 0) { clubs.push(...toAdd); changed = true; }
+  // 기존 동아리 이장 정보 업데이트 (DEFAULT에서 변경된 경우)
+  DEFAULT_CLUBS.forEach(dc => {
+    const stored = clubs.find(c => c.name === dc.name);
+    if (stored && stored.leader !== dc.leader) {
+      stored.leader = dc.leader;
+      changed = true;
+    }
+  });
+  clubs.forEach(c => { if (!('manager' in c)) { c.manager = ''; changed = true; } });
+  if (changed) saveClubs();
+}
+
+/* ═══ INIT ═══ */
+load();
+migrateMissingClubs();
+renderPeriodStatus();
+document.body.style.overflow = 'hidden';
+updateAdminBtn();
+renderAll();
+</script>
+</body>
+</html>
