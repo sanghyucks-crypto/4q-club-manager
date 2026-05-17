@@ -1291,6 +1291,14 @@ function renderDashboard() {
           <span class="db-info-item">📍 ${club.location||'미정'}</span>
           <span class="db-info-item">🔄 ${club.frequency||'미정'}</span>
         </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:12px;color:var(--t2);white-space:nowrap">👤 담당 관리자</span>
+          <select class="db-add-input" id="db-mgr-${idx}" style="flex:1;padding:6px 9px;font-size:13px">
+            <option value="">미지정</option>
+            ${admins.map(a=>`<option value="${a.name}"${club.manager===a.name?' selected':''}>${a.name} (${a.role})</option>`).join('')}
+          </select>
+          <button class="db-add-btn" onclick="dbSetManager(${idx})">배정</button>
+        </div>
         <button class="db-edit-btn" onclick="curClubIdx=${idx};openEditClubInfo()">✏️ 동아리 정보 수정</button>
         <div class="db-mem-chips" id="db-chips-${idx}">${memberChips}</div>
         <div class="db-add-row">
@@ -1316,6 +1324,12 @@ function dbToggleCard(idx) {
 
 function dbRemoveMember(idx, name) {
   clubs[idx].members = (clubs[idx].members || []).filter(n => n !== name);
+  saveClubs();
+  renderDashboard();
+}
+
+function dbSetManager(idx) {
+  clubs[idx].manager = document.getElementById('db-mgr-' + idx).value;
   saveClubs();
   renderDashboard();
 }
