@@ -783,11 +783,11 @@ const DEFAULT_CLUBS = [
   {status:'active',name:'런포티',icon:'🏃',color:'#DC2626',bg:'#FEF2F2',leader:'미정',purpose:'초보 러닝, 5km 마라톤 도전',location:'분당',schedule:'평일 저녁 19:00 이후',frequency:'주 2회 이상',note:'확인 필요',manager:'',members:['김정훈']},
   {status:'active',name:'에어워커 (농구)',icon:'🏀',color:'#0284C7',bg:'#F0F9FF',leader:'미정',purpose:'1청~4청 연합 동아리',location:'동천동 실내체육관',schedule:'마지막주 토요일 20:00',frequency:'월 1회',note:'연합 동아리 인계',manager:'',members:['박영인']},
   {status:'active',name:'독서모임',icon:'📚',color:'#0F766E',bg:'#F0FDFA',leader:'정상혁',purpose:'독서를 통한 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['김지연','홍지윤','강선배','김민주','김신영','장시연','표명석','채정호','김상미','김신애','서미라','손혜성','윤주혜','김미진','허진선','조은교','신기현','우희경','이민아','최주영','전소현']},
-  {status:'preparing',name:'카페인과 은혜 사이',icon:'☕',color:'#C2410C',bg:'#FFF7ED',leader:'미정',purpose:'카페 탐방 및 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['임유진','김상미','이기홍','김남송','김신애','최지원','채정호','배주원','박수경','윤혜진','최명진']},
-  {status:'preparing',name:'은혜로운 식탁',icon:'🍜',color:'#D97706',bg:'#FFFBEB',leader:'미정',purpose:'맛집 탐방 및 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['황인영','정삼용','정신영','조용민','김정훈','채정호','배주원','윤혜진','장시연','이혜연']},
-  {status:'preparing',name:'멍 동아리',icon:'🌳',color:'#16A34A',bg:'#F0FDF4',leader:'미정',purpose:'자연에서 쉬며 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['신은영','조용민','박혜주','홍영민','김남송','윤혜진','채정호','이시화','장시연','이혜연','유정화']},
-  {status:'preparing',name:'워킹 위드 갓',icon:'👣',color:'#0369A1',bg:'#E0F2FE',leader:'미정',purpose:'함께 산책하며 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['임유진','조용민','김남송','장형지','양윤정','윤혜진','최주영','장시연','이혜연','유정화']},
-  {status:'preparing',name:'우리랜드',icon:'🎲',color:'#6D28D9',bg:'#EDE9FE',leader:'미정',purpose:'보드게임으로 함께 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:['이종환','황인영','정삼용','조용민','권용구','채정호','이지원','장시연']},
+  {status:'preparing',name:'카페인과 은혜 사이',icon:'☕',color:'#C2410C',bg:'#FFF7ED',leader:'미정',purpose:'카페 탐방 및 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:[]},
+  {status:'preparing',name:'은혜로운 식탁',icon:'🍜',color:'#D97706',bg:'#FFFBEB',leader:'미정',purpose:'맛집 탐방 및 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:[]},
+  {status:'preparing',name:'멍 동아리',icon:'🌳',color:'#16A34A',bg:'#F0FDF4',leader:'미정',purpose:'자연에서 쉬며 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:[]},
+  {status:'preparing',name:'워킹 위드 갓',icon:'👣',color:'#0369A1',bg:'#E0F2FE',leader:'미정',purpose:'함께 산책하며 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:[]},
+  {status:'preparing',name:'우리랜드',icon:'🎲',color:'#6D28D9',bg:'#EDE9FE',leader:'미정',purpose:'보드게임으로 함께 교제',location:'미정',schedule:'미정',frequency:'미정',note:'',manager:'',members:[]},
 ];
 
 const DEFAULT_ADMINS = [
@@ -823,6 +823,10 @@ function load() {
   try { pendingClubReqs = JSON.parse(localStorage.getItem(PENDING_CLUB_KEY)) || []; } catch { pendingClubReqs = []; }
   try { approvalLog = JSON.parse(localStorage.getItem(APPROVAL_LOG_KEY)) || []; } catch { approvalLog = []; }
   try { appPeriod = JSON.parse(localStorage.getItem(PERIOD_KEY)) || { start:'', end:'' }; } catch { appPeriod = { start:'', end:'' }; }
+  // Migration: clear members from preparing clubs
+  let _clubsChanged = false;
+  clubs.forEach(club => { if (club.status === 'preparing' && club.members.length > 0) { club.members = []; _clubsChanged = true; } });
+  if (_clubsChanged) localStorage.setItem(CLUBS_KEY, JSON.stringify(clubs));
 }
 function saveClubs() { localStorage.setItem(CLUBS_KEY, JSON.stringify(clubs)); }
 function saveAdmins() { localStorage.setItem(ADMINS_KEY, JSON.stringify(admins)); }
